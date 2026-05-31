@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Episode 0 — Build a Real ML Model First</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; }
+
+  header { background:#161b22; border-bottom:1px solid #30363d; padding:20px 40px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header a { color:#8b949e; text-decoration:none; font-size:0.85rem; }
+  header h1 { font-size:1.5rem; font-weight:800; }
+  .ep-badge { background:linear-gradient(135deg,#bc8cff,#58a6ff); color:#fff; padding:4px 14px; border-radius:20px; font-size:0.78rem; font-weight:700; }
+
+  /* PIPELINE NAV */
+  .pipeline-nav { background:#161b22; border-bottom:1px solid #30363d; padding:16px 40px; overflow-x:auto; }
+  .pipeline { display:flex; align-items:center; gap:0; min-width:600px; }
+  .pip-step {
+    display:flex; align-items:center; gap:10px; padding:10px 18px; cursor:pointer;
+    border-radius:8px; transition:background 0.2s; font-size:0.85rem; font-weight:600;
+    color:#8b949e; border:1px solid transparent;
+  }
+  .pip-step:hover { background:#21262d; color:#e6edf3; }
+  .pip-step.active { background:#21262d; color:var(--c); border-color:var(--c); }
+  .pip-step.done .pip-num { background:var(--c); color:#000; }
+  .pip-num { width:24px; height:24px; border-radius:50%; background:#30363d; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; flex-shrink:0; }
+  .pip-arrow { color:#30363d; font-size:1.2rem; padding:0 4px; }
+
+  main { max-width:1000px; margin:0 auto; padding:36px 30px; }
+
+  /* HOOK */
+  .hook { background:linear-gradient(135deg,#1f2a3a,#1a1a2a); border:1px solid #30363d; border-radius:12px; padding:28px 32px; margin-bottom:32px; }
+  .hook h2 { font-size:1.6rem; font-weight:800; margin-bottom:10px; }
+  .hook p { color:#8b949e; line-height:1.8; font-size:0.95rem; }
+  .hook .accent { color:#bc8cff; }
+
+  /* STEPS */
+  .step { display:none; }
+  .step.active { display:block; }
+
+  .step-header { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+  .step-num { width:40px; height:40px; border-radius:50%; background:var(--c); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; color:#000; flex-shrink:0; }
+  .step-title { font-size:1.2rem; font-weight:800; }
+  .step-sub { font-size:0.85rem; color:#8b949e; margin-top:2px; }
+
+  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:22px; margin-bottom:18px; }
+  .card h3 { font-size:0.95rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:14px; font-weight:700; }
+
+  /* CODE BLOCK */
+  .code-block { background:#010409; border:1px solid #30363d; border-radius:8px; padding:18px 20px; font-family:monospace; font-size:0.88rem; line-height:2.1; position:relative; }
+  .code-line { display:block; border-radius:3px; padding:0 4px; margin:0 -4px; transition:background 0.2s; }
+  .code-line.highlight { background:#1f3a5f44; }
+  .c-comment { color:#484f58; }
+  .c-kw { color:#ff7b72; }
+  .c-fn { color:#d2a8ff; }
+  .c-str { color:#a5d6ff; }
+  .c-num { color:#79c0ff; }
+  .c-var { color:#ffa657; }
+  .c-good { color:#3fb950; }
+
+  /* WHY BUTTON */
+  .why-btn {
+    display:inline-flex; align-items:center; gap:6px; margin-top:12px;
+    background:#1f3a5f; border:1px solid #1f6feb; color:#58a6ff;
+    padding:7px 14px; border-radius:6px; font-size:0.82rem; font-weight:700;
+    text-decoration:none; transition:background 0.2s; cursor:pointer;
+  }
+  .why-btn:hover { background:#1f4a7f; }
+  .why-btn.purple { background:#2a1a4a; border-color:#bc8cff; color:#bc8cff; }
+  .why-btn.purple:hover { background:#3a2a5a; }
+  .why-btn.green { background:#1a3a1a; border-color:#2ea043; color:#3fb950; }
+  .why-btn.green:hover { background:#1a4a1a; }
+  .why-btn.orange { background:#2a1a00; border-color:#b06000; color:#ff9944; }
+  .why-btn.orange:hover { background:#3a2a00; }
+
+  /* DATA TABLE */
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { background:#21262d; padding:8px 12px; text-align:left; color:#8b949e; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; }
+  td { padding:8px 12px; border-bottom:1px solid #21262d; font-family:monospace; }
+  .churn-yes { color:#ff7b72; font-weight:700; }
+  .churn-no { color:#3fb950; font-weight:700; }
+  .highlight-row { background:#1f3a5f22; }
+
+  /* SPLIT VIZ */
+  .split-bar { height:36px; border-radius:6px; overflow:hidden; display:flex; margin:14px 0; }
+  .split-train { background:#1f6feb; display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:700; }
+  .split-test { background:#bc8cff; display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:700; }
+
+  /* SCALE VIZ */
+  .scale-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .scale-panel { background:#0d1117; border-radius:8px; padding:14px; }
+  .scale-label { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; font-weight:700; }
+  .feature-bar-row { margin-bottom:10px; }
+  .feature-name { font-size:0.78rem; color:#8b949e; margin-bottom:4px; }
+  .feature-bar-wrap { background:#21262d; border-radius:3px; height:16px; position:relative; overflow:hidden; }
+  .feature-bar-fill { height:100%; border-radius:3px; display:flex; align-items:center; padding-left:6px; font-size:0.7rem; font-weight:700; transition:width 0.6s ease; }
+
+  /* TRAINING VIZ */
+  canvas { border-radius:8px; display:block; }
+
+  /* PREDICT FORM */
+  .predict-form { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+  .form-field label { display:block; font-size:0.8rem; color:#8b949e; margin-bottom:6px; }
+  .form-field input[type=range] { width:100%; accent-color:#bc8cff; }
+  .form-field .val { color:#bc8cff; font-weight:700; font-family:monospace; }
+
+  /* RESULT */
+  .result-box { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:18px; font-family:monospace; font-size:0.88rem; line-height:2; margin-top:14px; }
+  .stat-row { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .stat { background:#21262d; border-radius:6px; padding:10px 16px; font-size:0.85rem; min-width:100px; }
+  .stat span { font-size:1.3rem; font-weight:800; font-family:monospace; display:block; }
+
+  /* NAV BUTTONS */
+  .nav-row { display:flex; justify-content:space-between; align-items:center; margin-top:24px; flex-wrap:wrap; gap:10px; }
+  button { padding:10px 22px; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:700; transition:background 0.2s; }
+  .btn-next { background:#238636; border:1px solid #2ea043; color:#fff; }
+  .btn-next:hover { background:#2ea043; }
+  .btn-back { background:#21262d; border:1px solid #30363d; color:#e6edf3; }
+  .btn-back:hover { background:#30363d; }
+
+  .full-code { background:#010409; border:1px solid #30363d; border-radius:10px; padding:24px; font-family:monospace; font-size:0.88rem; line-height:2.2; }
+
+  .completion { background:linear-gradient(135deg,#1a3a1a,#1f2a3a); border:1px solid #2ea043; border-radius:12px; padding:32px; text-align:center; margin-top:24px; }
+  .completion h2 { font-size:1.8rem; margin-bottom:12px; }
+  .completion p { color:#8b949e; line-height:1.8; margin-bottom:20px; }
+
+  .deep-dive-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-top:20px; }
+  .deep-dive-card { background:#161b22; border:1px solid #30363d; border-radius:8px; padding:16px; text-decoration:none; color:inherit; transition:border-color 0.2s; display:block; }
+  .deep-dive-card:hover { border-color:var(--c); }
+  .deep-dive-card .icon { font-size:1.4rem; margin-bottom:6px; }
+  .deep-dive-card .label { font-size:0.72rem; color:var(--c); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+  .deep-dive-card .title { font-size:0.88rem; font-weight:700; }
+
+  @media(max-width:600px){ .predict-form{grid-template-columns:1fr;} .scale-grid{grid-template-columns:1fr;} main{padding:16px;} header{padding:16px 20px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Episode 0 · Start Here</div>
+    <h1>Build a Real ML Model First</h1>
+  </div>
+  <span class="ep-badge">⚡ Fast Lane</span>
+</header>
+
+<!-- PIPELINE NAV -->
+<div class="pipeline-nav">
+  <div class="pipeline">
+    <div class="pip-step active" style="--c:#58a6ff" id="pip0" onclick="goStep(0)">
+      <div class="pip-num">1</div> 📊 The Data
+    </div>
+    <div class="pip-arrow">→</div>
+    <div class="pip-step" style="--c:#d29922" id="pip1" onclick="goStep(1)">
+      <div class="pip-num">2</div> ✂️ Split
+    </div>
+    <div class="pip-arrow">→</div>
+    <div class="pip-step" style="--c:#ff9944" id="pip2" onclick="goStep(2)">
+      <div class="pip-num">3</div> ⚖️ Scale
+    </div>
+    <div class="pip-arrow">→</div>
+    <div class="pip-step" style="--c:#bc8cff" id="pip3" onclick="goStep(3)">
+      <div class="pip-num">4</div> 🧠 Train
+    </div>
+    <div class="pip-arrow">→</div>
+    <div class="pip-step" style="--c:#3fb950" id="pip4" onclick="goStep(4)">
+      <div class="pip-num">5</div> 🎯 Predict
+    </div>
+    <div class="pip-arrow">→</div>
+    <div class="pip-step" style="--c:#e6edf3" id="pip5" onclick="goStep(5)">
+      <div class="pip-num">★</div> 🏁 Full Code
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- HOOK -->
+<div class="hook">
+  <h2>You're going to build a <span class="accent">working ML model</span> right now.</h2>
+  <p>
+    CloudSync has 200 users. Some are about to cancel. The model will look at their behaviour —
+    login frequency, features used, team size, support tickets — and predict who's at risk.
+    <strong style="color:#e6edf3">5 steps. 20 lines of Python. Real predictions.</strong>
+    <br><br>
+    Every step has a <span style="color:#58a6ff">↗ Why?</span> link that goes deep. Ignore them now — or follow them when you're curious.
+    Both paths work.
+  </p>
+</div>
+
+<!-- ═══ STEP 0: DATA ═══ -->
+<div class="step active" id="step-0" style="--c:#58a6ff">
+  <div class="step-header">
+    <div class="step-num" style="background:#58a6ff;">1</div>
+    <div>
+      <div class="step-title">The Dataset — what the model learns from</div>
+      <div class="step-sub">200 CloudSync users · 4 features · 1 label (churned: yes/no)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The data (first 8 rows of 200)</h3>
+    <div style="overflow-x:auto;">
+      <table id="data-table"></table>
+    </div>
+    <div class="result-box" style="margin-top:14px;">
+      <span style="color:#484f58"># Python</span><br>
+      X = df[[<span style="color:#a5d6ff">'login_days'</span>, <span style="color:#a5d6ff">'features_used'</span>, <span style="color:#a5d6ff">'team_size'</span>, <span style="color:#a5d6ff">'support_tickets'</span>]]<br>
+      y = df[<span style="color:#a5d6ff">'churned'</span>]<br>
+      <span style="color:#484f58"># X shape: (200, 4) — 200 users, 4 features each</span><br>
+      <span style="color:#484f58"># y shape: (200,)  — 1 label per user (0=stayed, 1=churned)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>What the model will learn</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+      The model will find patterns in these 4 numbers that predict churn.
+      For example: <em>"users who log in fewer than 5 days and raise 3+ tickets are 80% likely to cancel."</em>
+      You don't write those rules — the model discovers them from the data.
+    </p>
+  </div>
+
+  <div class="nav-row">
+    <div></div>
+    <button class="btn-next" onclick="goStep(1)">Next: Split the data →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 1: SPLIT ═══ -->
+<div class="step" id="step-1" style="--c:#d29922">
+  <div class="step-header">
+    <div class="step-num" style="background:#d29922;color:#000;">2</div>
+    <div>
+      <div class="step-title">Train/Test Split — don't cheat on your own exam</div>
+      <div class="step-sub">Hold back 20% of the data so you can test the model on data it's never seen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The split</h3>
+    <div class="split-bar">
+      <div class="split-train" style="width:80%;">160 rows — Training set (model learns from these)</div>
+      <div class="split-test" style="width:20%;">40 rows — Test set (model never sees these until evaluation)</div>
+    </div>
+    <div class="result-box">
+      <span style="color:#484f58"># Python</span><br>
+      <span style="color:#c9d1d9">X_train, X_test, y_train, y_test</span> = <span style="color:#d2a8ff">train_test_split</span>(X, y, test_size=<span style="color:#79c0ff">0.2</span>, random_state=<span style="color:#79c0ff">42</span>)<br>
+      <span style="color:#484f58"># X_train: 160 users · X_test: 40 users</span>
+    </div>
+    <a href="../phase2/week2/index.html" class="why-btn" style="margin-top:14px;">
+      ↗ Why split? — Overfitting Arena (Phase 2 W2)
+    </a>
+  </div>
+
+  <div class="card">
+    <h3>Why this matters</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+      If you tested the model on the same data it trained on, it would score 100% —
+      because it just memorised the answers. That's useless. The 40 held-out test rows
+      act like an exam on material the model hasn't seen.
+      <strong style="color:#e6edf3">If it scores well there, it will work on real new users too.</strong>
+    </p>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-back" onclick="goStep(0)">← Back</button>
+    <button class="btn-next" onclick="goStep(2)">Next: Scale the features →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 2: SCALE ═══ -->
+<div class="step" id="step-2" style="--c:#ff9944">
+  <div class="step-header">
+    <div class="step-num" style="background:#ff9944;color:#000;">3</div>
+    <div>
+      <div class="step-title">StandardScaler — put everything on the same scale</div>
+      <div class="step-sub">login_days (0–30) and team_size (1–500) can't be compared directly</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Before vs After scaling</h3>
+    <div class="scale-grid">
+      <div class="scale-panel">
+        <div class="scale-label" style="color:#ff7b72;">⚠️ Raw — different scales</div>
+        <div id="scale-before"></div>
+      </div>
+      <div class="scale-panel">
+        <div class="scale-label" style="color:#3fb950;">✅ Scaled — same scale (z-scores)</div>
+        <div id="scale-after"></div>
+      </div>
+    </div>
+    <div class="result-box" style="margin-top:14px;">
+      <span style="color:#484f58"># Python</span><br>
+      <span style="color:#c9d1d9">scaler</span> = <span style="color:#d2a8ff">StandardScaler</span>()<br>
+      <span style="color:#c9d1d9">X_train_scaled</span> = scaler.<span style="color:#d2a8ff">fit_transform</span>(X_train)<br>
+      <span style="color:#c9d1d9">X_test_scaled</span>  = scaler.<span style="color:#d2a8ff">transform</span>(X_test)<br>
+      <span style="color:#484f58"># z = (value − mean) / std  →  all features near −2 to +2</span>
+    </div>
+    <a href="../phase1/week2/index.html" class="why-btn orange" style="margin-top:14px;">
+      ↗ Why scale? — Cloud Cost Optimizer Game (Phase 1 W2)
+    </a>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-back" onclick="goStep(1)">← Back</button>
+    <button class="btn-next" onclick="goStep(3)">Next: Train the model →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 3: TRAIN ═══ -->
+<div class="step" id="step-3" style="--c:#bc8cff">
+  <div class="step-header">
+    <div class="step-num" style="background:#bc8cff;color:#000;">4</div>
+    <div>
+      <div class="step-title">LogisticRegression.fit() — the model learns</div>
+      <div class="step-sub">Gradient descent adjusts the model's weights 1,000× until predictions stop improving</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Training in progress — watch the loss drop</h3>
+    <canvas id="train-canvas" width="900" height="220"></canvas>
+    <div class="stat-row" id="train-stats"></div>
+    <button class="btn-next" id="train-btn" onclick="runTraining()" style="margin-top:8px;">▶ Run Training</button>
+    <div class="result-box" style="margin-top:14px;">
+      <span style="color:#484f58"># Python</span><br>
+      <span style="color:#c9d1d9">model</span> = <span style="color:#d2a8ff">LogisticRegression</span>()<br>
+      <span style="color:#c9d1d9">model</span>.<span style="color:#d2a8ff">fit</span>(X_train_scaled, y_train)<br>
+      <span style="color:#484f58"># fit() runs gradient descent internally</span><br>
+      <span style="color:#484f58"># adjusting weights to minimise prediction error</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+      <a href="../phase1/week1/index.html" class="why-btn purple">
+        ↗ What is fit() doing? — Gradient Descent Simulator (Phase 1 W1)
+      </a>
+      <a href="../phase2/week1/index.html" class="why-btn orange">
+        ↗ What is LogisticRegression? — Linear Regression Game (Phase 2 W1)
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>What the model learned — its weights</h3>
+    <div id="weights-display" class="result-box">
+      <span style="color:#484f58">Run training first to see the learned weights</span>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-back" onclick="goStep(2)">← Back</button>
+    <button class="btn-next" id="next-from-train" onclick="goStep(4)" disabled>Next: Make predictions →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 4: PREDICT ═══ -->
+<div class="step" id="step-4" style="--c:#3fb950">
+  <div class="step-header">
+    <div class="step-num" style="background:#3fb950;color:#000;">5</div>
+    <div>
+      <div class="step-title">Predict & Score — how good is the model?</div>
+      <div class="step-sub">Test on the 40 held-out users the model has never seen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Model score on test set</h3>
+    <div class="stat-row" id="score-stats"></div>
+    <div class="result-box">
+      <span style="color:#484f58"># Python</span><br>
+      <span style="color:#c9d1d9">accuracy</span> = model.<span style="color:#d2a8ff">score</span>(X_test_scaled, y_test)<br>
+      <span style="color:#484f58"># score() = correct predictions / total test rows</span>
+    </div>
+    <a href="../phase2/week1/index.html" class="why-btn green" style="margin-top:14px;">
+      ↗ What does accuracy mean? — How Good is the Model (Phase 2 W1)
+    </a>
+  </div>
+
+  <div class="card">
+    <h3>Try it — predict churn for a new user</h3>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">Slide the values and watch the churn probability update in real time.</p>
+    <div class="predict-form">
+      <div class="form-field">
+        <label>Login days last month: <span class="val" id="v-login">15</span></label>
+        <input type="range" id="s-login" min="0" max="30" value="15" oninput="updatePredict()">
+      </div>
+      <div class="form-field">
+        <label>Features used: <span class="val" id="v-feat">8</span></label>
+        <input type="range" id="s-feat" min="1" max="20" value="8" oninput="updatePredict()">
+      </div>
+      <div class="form-field">
+        <label>Team size: <span class="val" id="v-team">12</span></label>
+        <input type="range" id="s-team" min="1" max="50" value="12" oninput="updatePredict()">
+      </div>
+      <div class="form-field">
+        <label>Support tickets: <span class="val" id="v-tickets">2</span></label>
+        <input type="range" id="s-tickets" min="0" max="10" value="2" oninput="updatePredict()">
+      </div>
+    </div>
+    <div id="predict-result"></div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-back" onclick="goStep(3)">← Back</button>
+    <button class="btn-next" onclick="goStep(5)">See the full code →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 5: FULL CODE ═══ -->
+<div class="step" id="step-5" style="--c:#e6edf3">
+  <div class="step-header">
+    <div class="step-num" style="background:#e6edf3;color:#000;">★</div>
+    <div>
+      <div class="step-title">The Complete Model — all 20 lines</div>
+      <div class="step-sub">This is a real, production-quality ML pipeline</div>
+    </div>
+  </div>
+
+  <div class="full-code">
+<span style="color:#484f58"># CloudSync Churn Predictor — complete pipeline</span>
+<span style="color:#ff7b72">import</span> pandas <span style="color:#ff7b72">as</span> pd
+<span style="color:#ff7b72">from</span> sklearn.model_selection <span style="color:#ff7b72">import</span> train_test_split
+<span style="color:#ff7b72">from</span> sklearn.preprocessing  <span style="color:#ff7b72">import</span> StandardScaler
+<span style="color:#ff7b72">from</span> sklearn.linear_model   <span style="color:#ff7b72">import</span> LogisticRegression
+<span style="color:#ff7b72">from</span> sklearn.pipeline       <span style="color:#ff7b72">import</span> Pipeline
+<span style="color:#ff7b72">from</span> sklearn.metrics        <span style="color:#ff7b72">import</span> accuracy_score
+
+<span style="color:#484f58"># 1. Load data</span>
+df = pd.<span style="color:#d2a8ff">read_csv</span>(<span style="color:#a5d6ff">'cloudsync_users.csv'</span>)
+X  = df[[<span style="color:#a5d6ff">'login_days'</span>, <span style="color:#a5d6ff">'features_used'</span>, <span style="color:#a5d6ff">'team_size'</span>, <span style="color:#a5d6ff">'support_tickets'</span>]]
+y  = df[<span style="color:#a5d6ff">'churned'</span>]
+
+<span style="color:#484f58"># 2. Split — keep 20% hidden for testing</span>
+X_train, X_test, y_train, y_test = <span style="color:#d2a8ff">train_test_split</span>(X, y, test_size=<span style="color:#79c0ff">0.2</span>, random_state=<span style="color:#79c0ff">42</span>)
+
+<span style="color:#484f58"># 3 & 4. Scale + Train — bundled in a Pipeline</span>
+model = <span style="color:#d2a8ff">Pipeline</span>([
+    (<span style="color:#a5d6ff">'scaler'</span>, <span style="color:#d2a8ff">StandardScaler</span>()),
+    (<span style="color:#a5d6ff">'clf'</span>,    <span style="color:#d2a8ff">LogisticRegression</span>()),
+])
+model.<span style="color:#d2a8ff">fit</span>(X_train, y_train)
+
+<span style="color:#484f58"># 5. Evaluate</span>
+accuracy = model.<span style="color:#d2a8ff">score</span>(X_test, y_test)
+<span style="color:#d2a8ff">print</span>(<span style="color:#a5d6ff">f"Accuracy: {accuracy:.1%}"</span>)  <span style="color:#484f58"># → ~85%</span>
+
+<span style="color:#484f58"># Predict a new user</span>
+new_user = [[<span style="color:#79c0ff">4</span>, <span style="color:#79c0ff">2</span>, <span style="color:#79c0ff">1</span>, <span style="color:#79c0ff">5</span>]]  <span style="color:#484f58"># low login, few features, solo, many tickets</span>
+prob = model.<span style="color:#d2a8ff">predict_proba</span>(new_user)[<span style="color:#79c0ff">0</span>][<span style="color:#79c0ff">1</span>]
+<span style="color:#d2a8ff">print</span>(<span style="color:#a5d6ff">f"Churn probability: {prob:.1%}"</span>)  <span style="color:#484f58"># → ~91% at risk</span>
+  </div>
+
+  <div class="completion">
+    <h2>🎉 You just built a real ML model.</h2>
+    <p>
+      That's the whole picture. Now you can go as deep as you want on any part.<br>
+      Each component below links to a full interactive lesson.
+    </p>
+    <div class="deep-dive-grid">
+      <a href="../phase1/week1/index.html" class="deep-dive-card" style="--c:#58a6ff;">
+        <div class="icon">⛷️</div>
+        <div class="label">Phase 1 W1</div>
+        <div class="title">What is fit() doing? → Gradient Descent</div>
+      </a>
+      <a href="../phase1/week2/index.html" class="deep-dive-card" style="--c:#ff9944;">
+        <div class="icon">☁️</div>
+        <div class="label">Phase 1 W2</div>
+        <div class="title">Why StandardScaler? → Feature Scaling</div>
+      </a>
+      <a href="../phase1/week3/index.html" class="deep-dive-card" style="--c:#d29922;">
+        <div class="icon">🕵️</div>
+        <div class="label">Phase 1 W3</div>
+        <div class="title">How to explore the data first → EDA</div>
+      </a>
+      <a href="../phase1/week4/index.html" class="deep-dive-card" style="--c:#bc8cff;">
+        <div class="icon">🚀</div>
+        <div class="label">Phase 1 W4</div>
+        <div class="title">Full preprocessing pipeline → Capstone</div>
+      </a>
+      <a href="../phase2/week1/index.html" class="deep-dive-card" style="--c:#ff9944;">
+        <div class="icon">📈</div>
+        <div class="label">Phase 2 W1</div>
+        <div class="title">What is LogisticRegression? → Linear Regression</div>
+      </a>
+      <a href="../phase2/week2/index.html" class="deep-dive-card" style="--c:#ff7b72;">
+        <div class="icon">🎯</div>
+        <div class="label">Phase 2 W2</div>
+        <div class="title">Why train_test_split? → Overfitting</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-back" onclick="goStep(4)">← Back</button>
+    <a href="../roadmap.html" style="color:#58a6ff;font-size:0.9rem;text-decoration:none;">View full 40-week roadmap →</a>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════ DATA
+function seeded(s) { return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+const rand = seeded(99);
+
+function genData(n=200) {
+  const rows = [];
+  for(let i=0;i<n;i++) {
+    const login    = Math.round(rand()*30);
+    const features = Math.round(1+rand()*19);
+    const team     = Math.round(1+rand()*49);
+    const tickets  = Math.round(rand()*10);
+    // churn probability: low login + low features + many tickets → more likely
+    const logit = -2.5 + (-0.12*login) + (-0.08*features) + (0.002*team) + (0.35*tickets) + (rand()-0.5)*1.2;
+    const prob = 1/(1+Math.exp(-logit));
+    const churned = prob > 0.5 ? 1 : 0;
+    rows.push({login, features, team, tickets, churned, prob});
+  }
+  return rows;
+}
+
+const DATA = genData(200);
+const TRAIN = DATA.slice(0,160), TEST = DATA.slice(160);
+
+// ═══════════════════════════════════════ PIPELINE NAVIGATION
+let currentStep = 0;
+const STEPS = 6;
+
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.pip-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  document.getElementById('pip'+n).classList.add('active');
+  currentStep = n;
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(n===0) renderDataTable();
+  if(n===2) renderScaleViz();
+  if(n===3) renderTrainCanvas();
+  if(n===4) renderScoreStats(); updatePredict();
+}
+
+// ═══════════════════════════════════════ STEP 0: DATA TABLE
+function renderDataTable() {
+  const sample = DATA.slice(0,8);
+  const html = `<thead><tr>
+    <th>#</th><th>Login Days</th><th>Features Used</th><th>Team Size</th><th>Support Tickets</th><th>Churned?</th>
+  </tr></thead><tbody>${sample.map((d,i)=>`<tr class="${i%2===0?'highlight-row':''}">
+    <td style="color:#484f58">${i+1}</td>
+    <td>${d.login}</td><td>${d.features}</td><td>${d.team}</td><td>${d.tickets}</td>
+    <td class="${d.churned?'churn-yes':'churn-no'}">${d.churned?'✗ Churned':'✓ Stayed'}</td>
+  </tr>`).join('')}</tbody>`;
+  document.getElementById('data-table').innerHTML = html;
+}
+
+// ═══════════════════════════════════════ STEP 2: SCALE VIZ
+function renderScaleViz() {
+  // Sample user for demo
+  const user = {login:4, features:18, team:42, tickets:1};
+  const means = {login:15, features:10, team:25, tickets:5};
+  const stds  = {login:8,  features:5,  team:14, tickets:3};
+
+  function featureBars(vals, maxVals, color, showRaw=true) {
+    return Object.entries(vals).map(([k,v])=>{
+      const max = maxVals[k];
+      const pct = Math.round(Math.abs(v)/max*100);
+      return `<div class="feature-bar-row">
+        <div class="feature-name">${k.replace('_',' ')} = <strong style="color:${color}">${showRaw?v:v.toFixed(2)}</strong></div>
+        <div class="feature-bar-wrap">
+          <div class="feature-bar-fill" style="width:${Math.min(100,pct)}%;background:${color}99;">${Math.min(100,pct)}%</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const rawVals = {login_days:user.login, features_used:user.features, team_size:user.team, support_tickets:user.tickets};
+  const rawMax  = {login_days:30, features_used:20, team_size:50, support_tickets:10};
+  const scaledVals = {
+    login_days:     (user.login-means.login)/stds.login,
+    features_used:  (user.features-means.features)/stds.features,
+    team_size:      (user.team-means.team)/stds.team,
+    support_tickets:(user.tickets-means.tickets)/stds.tickets,
+  };
+  const scaledMax = {login_days:3,features_used:3,team_size:3,support_tickets:3};
+
+  document.getElementById('scale-before').innerHTML = featureBars(rawVals, rawMax, '#ff7b72', true);
+  document.getElementById('scale-after').innerHTML  = featureBars(scaledVals, scaledMax, '#3fb950', false);
+}
+
+// ═══════════════════════════════════════ STEP 3: TRAIN
+let trainedWeights = null;
+
+function sigmoid(z) { return 1/(1+Math.exp(-z)); }
+function dot(a,b) { return a.reduce((s,v,i)=>s+v*b[i],0); }
+
+function standardize(data, mu, sig) {
+  return data.map(row=>row.map((v,i)=>(v-mu[i])/sig[i]));
+}
+
+function computeStats(data) {
+  const n=data.length, m=data[0].length;
+  const mu=new Array(m).fill(0), sig=new Array(m).fill(0);
+  data.forEach(r=>r.forEach((v,j)=>mu[j]+=v/n));
+  data.forEach(r=>r.forEach((v,j)=>sig[j]+=(v-mu[j])**2/n));
+  sig.forEach((_,j)=>sig[j]=Math.sqrt(sig[j])||1);
+  return {mu,sig};
+}
+
+const Xtrain = TRAIN.map(d=>[d.login,d.features,d.team,d.tickets]);
+const ytrain = TRAIN.map(d=>d.churned);
+const Xtest  = TEST.map(d=>[d.login,d.features,d.team,d.tickets]);
+const ytest  = TEST.map(d=>d.churned);
+const {mu,sig} = computeStats(Xtrain);
+const XtrainS = standardize(Xtrain,mu,sig);
+const XtestS  = standardize(Xtest,mu,sig);
+
+function trainModel(epochs=400, lr=0.15) {
+  const m=4;
+  let w=new Array(m).fill(0), b=0;
+  const losses=[];
+  for(let e=0;e<epochs;e++){
+    const preds=XtrainS.map(x=>sigmoid(dot(x,w)+b));
+    const loss=-ytrain.reduce((s,y,i)=>s+y*Math.log(preds[i]+1e-9)+(1-y)*Math.log(1-preds[i]+1e-9),0)/ytrain.length;
+    losses.push(loss);
+    const diffs=preds.map((p,i)=>p-ytrain[i]);
+    const dw=w.map((_,j)=>XtrainS.reduce((s,x,i)=>s+diffs[i]*x[j],0)/ytrain.length);
+    const db=diffs.reduce((s,d)=>s+d,0)/ytrain.length;
+    w=w.map((wi,j)=>wi-lr*dw[j]);
+    b-=lr*db;
+  }
+  return {w,b,losses};
+}
+
+function accuracy(w,b,X,y) {
+  return X.reduce((s,x,i)=>{
+    const pred=sigmoid(dot(x,w)+b)>0.5?1:0;
+    return s+(pred===y[i]?1:0);
+  },0)/y.length;
+}
+
+function renderTrainCanvas() {
+  const c=document.getElementById('train-canvas');
+  const W=c.offsetWidth||900; c.width=W; c.height=220;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,220);
+  ctx.fillStyle='#484f58'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Click ▶ Run Training to watch the model learn', W/2, 110);
+}
+
+function runTraining() {
+  document.getElementById('train-btn').textContent='Training...';
+  document.getElementById('train-btn').disabled=true;
+
+  setTimeout(()=>{
+    const result = trainModel(400, 0.15);
+    trainedWeights = result;
+
+    const c=document.getElementById('train-canvas');
+    const W=c.width, H=220;
+    const ctx=c.getContext('2d');
+    const losses=result.losses;
+    ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
+
+    const padL=50,padR=20,padT=20,padB=35;
+    const maxL=Math.max(...losses), minL=Math.min(...losses);
+    const toX=i=>padL+i/(losses.length-1)*(W-padL-padR);
+    const toY=v=>H-padB-(v-minL)/(maxL-minL)*(H-padT-padB);
+
+    // Grid
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){
+      const y=padT+i*(H-padT-padB)/4;
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      const v=(maxL-(i/4)*(maxL-minL)).toFixed(2);
+      ctx.fillStyle='#484f58'; ctx.font='10px monospace'; ctx.textAlign='right';
+      ctx.fillText(v,padL-6,y+4);
+    }
+
+    // Loss curve
+    ctx.beginPath(); ctx.strokeStyle='#bc8cff'; ctx.lineWidth=2.5;
+    losses.forEach((l,i)=>{ i===0?ctx.moveTo(toX(i),toY(l)):ctx.lineTo(toX(i),toY(l)); });
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='#8b949e'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Epochs (training steps)',W/2,H-6);
+    ctx.save(); ctx.translate(12,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Loss',0,0); ctx.restore();
+    ctx.fillStyle='#bc8cff'; ctx.textAlign='left';
+    ctx.fillText('Loss decreasing → model improving',padL+10,padT+16);
+
+    const trainAcc=accuracy(result.w,result.b,XtrainS,ytrain);
+    const testAcc =accuracy(result.w,result.b,XtestS,ytest);
+
+    document.getElementById('train-stats').innerHTML=`
+      <div class="stat">Final Loss<span style="color:#bc8cff;">${result.losses[result.losses.length-1].toFixed(3)}</span></div>
+      <div class="stat">Train Accuracy<span style="color:#3fb950;">${(trainAcc*100).toFixed(1)}%</span></div>
+      <div class="stat">Epochs<span style="color:#58a6ff;">400</span></div>`;
+
+    const featureNames=['Login Days','Features Used','Team Size','Support Tickets'];
+    const weightDisplay=result.w.map((w,i)=>{
+      const sign=w>0?'+':'';
+      const color=w>0?'#ff7b72':'#3fb950';
+      return `  <span style="color:#8b949e">${featureNames[i]}:</span> <span style="color:${color}">${sign}${w.toFixed(3)}</span>  <span style="color:#484f58">${w<0?'↓ lowers churn risk':'↑ raises churn risk'}</span>`;
+    }).join('\n');
+    document.getElementById('weights-display').innerHTML=weightDisplay;
+
+    document.getElementById('train-btn').textContent='✓ Training Complete';
+    document.getElementById('next-from-train').disabled=false;
+  },100);
+}
+
+// ═══════════════════════════════════════ STEP 4: PREDICT
+function renderScoreStats() {
+  if(!trainedWeights) {
+    // auto-train silently
+    trainedWeights = trainModel(400,0.15);
+  }
+  const acc = accuracy(trainedWeights.w, trainedWeights.b, XtestS, ytest);
+  const correct = Math.round(acc*40);
+  document.getElementById('score-stats').innerHTML=`
+    <div class="stat">Test Accuracy<span style="color:#3fb950;">${(acc*100).toFixed(1)}%</span></div>
+    <div class="stat">Correct<span style="color:#3fb950;">${correct} / 40</span></div>
+    <div class="stat">Wrong<span style="color:#ff7b72;">${40-correct} / 40</span></div>
+    <div class="stat">Baseline (always guess "stayed")<span style="color:#8b949e;">${Math.round(ytest.filter(y=>y===0).length/40*100)}%</span></div>`;
+}
+
+function updatePredict() {
+  const login   =+document.getElementById('s-login').value;
+  const feat    =+document.getElementById('s-feat').value;
+  const team    =+document.getElementById('s-team').value;
+  const tickets =+document.getElementById('s-tickets').value;
+  document.getElementById('v-login').textContent=login;
+  document.getElementById('v-feat').textContent=feat;
+  document.getElementById('v-team').textContent=team;
+  document.getElementById('v-tickets').textContent=tickets;
+
+  if(!trainedWeights) { trainedWeights=trainModel(400,0.15); }
+  const {w,b}=trainedWeights;
+  const scaled=[(login-mu[0])/sig[0],(feat-mu[1])/sig[1],(team-mu[2])/sig[2],(tickets-mu[3])/sig[3]];
+  const prob=sigmoid(dot(scaled,w)+b);
+  const risk=prob>0.7?'High':'low risk';
+  const color=prob>0.7?'#ff7b72':prob>0.4?'#d29922':'#3fb950';
+  const pct=(prob*100).toFixed(1);
+
+  document.getElementById('predict-result').innerHTML=`
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:4px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Churn probability</div>
+          <div style="font-size:2.4rem;font-weight:800;color:${color};font-family:monospace;">${pct}%</div>
+        </div>
+        <div style="flex:2;min-width:200px;">
+          <div style="background:#21262d;border-radius:6px;height:16px;overflow:hidden;margin-bottom:8px;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.3s;"></div>
+          </div>
+          <div style="font-size:0.85rem;color:${color};font-weight:700;">${prob>0.7?'⚠️ High churn risk — consider outreach':prob>0.4?'🟡 Moderate risk — monitor closely':'✓ Low churn risk — user is healthy'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Init
+renderDataTable();
+</script>
+</body>
+</html>
