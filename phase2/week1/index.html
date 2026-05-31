@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2 Week 1 — Linear Regression Game</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; }
+  header { background:#161b22; border-bottom:1px solid #30363d; padding:16px 40px; display:flex; align-items:center; gap:16px; }
+  header a { color:#ff9944; text-decoration:none; font-size:0.9rem; }
+  header h1 { font-size:1.4rem; }
+  .badge { background:#3a2200; color:#ff9944; padding:3px 10px; border-radius:12px; font-size:0.75rem; border:1px solid #ff994444; }
+  .tabs { display:flex; gap:4px; padding:0 40px; background:#161b22; border-bottom:1px solid #30363d; }
+  .tab { padding:14px 22px; cursor:pointer; font-size:0.9rem; border-bottom:3px solid transparent; color:#8b949e; transition:all 0.2s; }
+  .tab:hover { color:#e6edf3; }
+  .tab.active { color:#ff9944; border-bottom-color:#ff9944; }
+  .panel { display:none; padding:36px 40px; max-width:960px; margin:0 auto; }
+  .panel.active { display:block; }
+  h2 { font-size:1.4rem; margin-bottom:8px; }
+  .hook { background:#2a1a00; border:1px solid #ff994455; border-radius:10px; padding:16px 20px; margin-bottom:24px; }
+  .hook-label { font-size:0.75rem; color:#ff9944; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .hook p { font-size:0.95rem; color:#e6edf3; line-height:1.7; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:24px; margin-bottom:20px; }
+  .card h3 { font-size:1rem; margin-bottom:14px; color:#ff9944; }
+  canvas { border-radius:8px; display:block; cursor:crosshair; }
+  button { padding:10px 22px; border-radius:8px; cursor:pointer; font-size:0.88rem; font-weight:700; border:1px solid #b06000; background:#7a4200; color:#fff; transition:background 0.2s; margin:4px; }
+  button:hover { background:#b06000; }
+  button.green { background:#238636; border-color:#2ea043; }
+  button.green:hover { background:#2ea043; }
+  button.secondary { background:#21262d; border-color:#30363d; color:#e6edf3; }
+  button.secondary:hover { background:#30363d; }
+  .stat-row { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .stat { background:#21262d; border-radius:6px; padding:10px 16px; font-size:0.85rem; }
+  .stat span { font-size:1.2rem; font-weight:800; font-family:monospace; display:block; }
+  .result-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:14px 16px; font-family:monospace; font-size:0.86rem; line-height:1.9; margin-top:14px; }
+  .green { color:#3fb950; } .red { color:#ff7b72; } .yellow { color:#d29922; } .orange { color:#ff9944; } .blue { color:#58a6ff; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { background:#21262d; padding:8px 12px; text-align:left; color:#8b949e; }
+  td { padding:8px 12px; border-bottom:1px solid #21262d; font-family:monospace; }
+  .info-box { border-radius:8px; padding:14px 16px; font-size:0.85rem; line-height:1.8; margin:14px 0; }
+  .info-blue { background:#1f3a5f22; border:1px solid #1f6feb; color:#8b949e; }
+  .info-green { background:#1a3a1a; border:1px solid #2ea043; color:#8b949e; }
+  .info-orange { background:#2a1a00; border:1px solid #ff994455; color:#8b949e; }
+  .quiz-q { background:#1f3a5f22; border:1px solid #1f6feb; border-radius:8px; padding:16px; margin:14px 0; }
+  .opt { display:block; width:100%; text-align:left; margin:6px 0; padding:10px 14px; background:#21262d; border:1px solid #30363d; border-radius:6px; cursor:pointer; color:#e6edf3; transition:all 0.2s; }
+  .opt:hover { border-color:#ff9944; color:#ff9944; }
+  .opt.correct { background:#1a7f37; border-color:#2ea043; color:#3fb950; }
+  .opt.wrong { background:#da363322; border-color:#f85149; color:#ff7b72; }
+  .celebrate { background:#1a7f3722; border:1px solid #2ea043; border-radius:8px; padding:16px; margin-top:14px; display:none; color:#3fb950; font-size:0.9rem; }
+  @media(max-width:640px){ .two-col{grid-template-columns:1fr;} .panel{padding:20px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Phase 2 · Week 1</div>
+    <h1>📈 Linear Regression Game</h1>
+  </div>
+  <span class="badge">Your first ML model</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('what')">📖 What is it?</div>
+  <div class="tab" onclick="switchTab('game')">🎮 Line Fitter Game</div>
+  <div class="tab" onclick="switchTab('auto')">🤖 Watch the Model Learn</div>
+  <div class="tab" onclick="switchTab('eval')">📊 How Good is the Model?</div>
+  <div class="tab" onclick="switchTab('quiz')">🎓 Quiz</div>
+</div>
+
+<!-- ===== TAB 1: WHAT IS IT ===== -->
+<div id="panel-what" class="panel active">
+  <h2>📈 What is Linear Regression?</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 In plain English</div>
+    <p>Linear regression is drawing the single best straight line through a cloud of data points — so you can predict where a <em>new</em> point will land.</p>
+  </div>
+
+  <div class="card">
+    <h3>The Problem It Solves</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+      You have historical data: you know the server count and the actual monthly bill for 20 past months.
+      Now a new month starts — you have 7 servers. <strong style="color:#e6edf3">What will the bill be?</strong>
+    </p>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+      Linear regression finds the line that best fits the past data, then uses it to answer that question.
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;font-family:monospace;font-size:0.88rem;line-height:2.1;">
+      <span style="color:#8b949e"># The model learns ONE formula:</span><br>
+      bill = <span style="color:#ff9944">slope</span> × servers + <span style="color:#58a6ff">intercept</span><br><br>
+      <span style="color:#8b949e"># Example after training:</span><br>
+      bill = <span style="color:#ff9944">280</span> × servers + <span style="color:#58a6ff">150</span><br><br>
+      <span style="color:#8b949e"># Prediction for 7 servers:</span><br>
+      bill = 280 × 7 + 150 = <span style="color:#3fb950">$2,110</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Two Parts of the Line</h3>
+    <div class="two-col">
+      <div style="background:#0d1117;border-radius:8px;padding:16px;">
+        <div style="font-size:0.75rem;color:#ff9944;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Slope</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+          How much the prediction <strong style="color:#e6edf3">changes per unit of input</strong>.
+          Slope = 280 means: every extra server adds £280 to the bill.
+          A steep slope = strong relationship. Flat slope = weak relationship.
+        </p>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;">
+        <div style="font-size:0.75rem;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Intercept</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+          The prediction when <strong style="color:#e6edf3">input = 0</strong>. The base cost even with zero servers
+          — think of it as the fixed monthly fee (storage, networking, monitoring) that you pay regardless.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How It Connects to What You Already Know</h3>
+    <div class="info-box info-blue">
+      <strong style="color:#58a6ff">From Phase 1:</strong> you learned that gradient descent slides a ball downhill to find the minimum loss.
+      Linear regression uses <em>exactly that</em> — it adjusts slope and intercept step by step until the line fits as well as possible.
+      The only difference: instead of one weight (x), you now have two (slope + intercept). Same algorithm, two numbers to tune.
+    </div>
+    <div class="info-box info-orange" style="margin-top:0;">
+      <strong style="color:#ff9944">The loss function:</strong> for each data point, measure the gap between the line's prediction and the real value.
+      Square those gaps (so negatives don't cancel positives), then average them.
+      That's <strong style="color:#e6edf3">Mean Squared Error (MSE)</strong> — the lower, the better the fit.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>When to Use It</h3>
+    <table>
+      <thead><tr><th>✅ Good for</th><th>❌ Not suitable for</th></tr></thead>
+      <tbody>
+        <tr><td>Predicting a number (cost, temperature, sales)</td><td>Predicting yes/no (spam, churn, buy) — use logistic regression (Week 3)</td></tr>
+        <tr><td>When the relationship is roughly linear</td><td>Curved or complex relationships (use more advanced models)</td></tr>
+        <tr><td>Quick baseline — always try linear first</td><td>When features interact in complex ways</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="green" onclick="switchTab('game')">▶ Play the Line Fitter Game →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: GAME ===== -->
+<div id="panel-game" class="panel">
+  <h2>🎮 Line Fitter Game</h2>
+  <div class="hook">
+    <div class="hook-label">🎯 Your challenge</div>
+    <p>Drag the <strong>slope</strong> and <strong>intercept</strong> sliders to fit the line through the cloud of server cost data points.
+    Watch the <strong>MSE (error) drop</strong> as your line gets closer. Can you beat the model's score?</p>
+  </div>
+
+  <div class="card">
+    <canvas id="game-canvas" width="860" height="340"></canvas>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:18px;align-items:center;">
+      <div style="flex:1;min-width:200px;">
+        <label style="font-size:0.85rem;color:#8b949e;">Slope (cost per server): <strong id="slope-display" style="color:#ff9944;">0</strong></label><br>
+        <input type="range" id="slope-slider" min="-200" max="600" step="5" value="0" oninput="updateLine()" style="width:100%;accent-color:#ff9944;margin-top:6px;">
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <label style="font-size:0.85rem;color:#8b949e;">Intercept (base cost): <strong id="intercept-display" style="color:#58a6ff;">0</strong></label><br>
+        <input type="range" id="intercept-slider" min="-500" max="2000" step="10" value="0" oninput="updateLine()" style="width:100%;accent-color:#58a6ff;margin-top:6px;">
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat">Your MSE: <span id="your-mse" class="red">—</span></div>
+      <div class="stat">Best possible MSE: <span id="best-mse" class="green">—</span></div>
+      <div class="stat">Your score: <span id="your-score" class="orange">—</span></div>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="secondary" onclick="resetGame()">↺ Reset</button>
+      <button class="green" onclick="showAnswer()">👁 Reveal best fit</button>
+    </div>
+    <div id="game-msg" class="result-box" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h3>What is MSE?</h3>
+    <div class="info-box info-orange">
+      <strong style="color:#ff9944">MSE = Mean Squared Error</strong> — the average of (prediction − actual)² across all data points.
+      The red vertical lines on the chart are the individual errors. MSE is the average of all those gaps, squared.
+      Squaring does two things: makes negatives positive, and punishes big errors more than small ones.
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-top:12px;">
+      <strong style="color:#e6edf3">Lower MSE = better fit.</strong>
+      MSE = 0 means the line passes through every point perfectly (never happens with real data).
+      The goal is to get it as low as possible — that's what gradient descent does automatically.
+    </p>
+  </div>
+</div>
+
+<!-- ===== TAB 3: AUTO ===== -->
+<div id="panel-auto" class="panel">
+  <h2>🤖 Watch the Model Learn Automatically</h2>
+  <div class="hook">
+    <div class="hook-label">💡 What's happening</div>
+    <p>The model starts with a random line (bad fit). Every step it adjusts slope and intercept slightly toward less error — using gradient descent. Watch it home in on the best line.</p>
+  </div>
+
+  <div class="card">
+    <canvas id="auto-canvas" width="860" height="320"></canvas>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center;">
+      <button class="green" onclick="autoRun()" id="auto-btn">▶ Start Training</button>
+      <button class="secondary" onclick="autoReset()">↺ Reset</button>
+      <div style="font-size:0.85rem;color:#8b949e;">Learning rate: <strong id="lr-val" style="color:#ff9944;">0.0001</strong>
+        <input type="range" id="lr-slider" min="1" max="10" step="1" value="5" oninput="updateAutoLR()" style="accent-color:#ff9944;margin-left:8px;width:100px;vertical-align:middle;"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat">Epoch: <span id="auto-epoch">0</span></div>
+      <div class="stat">Slope: <span id="auto-slope" style="color:#ff9944;">0</span></div>
+      <div class="stat">Intercept: <span id="auto-intercept" style="color:#58a6ff;">0</span></div>
+      <div class="stat">MSE: <span id="auto-mse" class="red">—</span></div>
+    </div>
+    <div id="auto-msg" class="result-box" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h3>What the Model is Actually Doing Each Step</h3>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;font-family:monospace;font-size:0.85rem;line-height:2.2;">
+      <span style="color:#8b949e">// For each training step:</span><br>
+      prediction = <span style="color:#ff9944">slope</span> × x + <span style="color:#58a6ff">intercept</span><br>
+      error &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= prediction − actual_bill<br>
+      <span style="color:#8b949e">// Gradient descent update:</span><br>
+      <span style="color:#ff9944">slope</span> &nbsp;&nbsp;&nbsp;&nbsp;= slope &nbsp;&nbsp;&nbsp;&nbsp;− lr × <span style="color:#d29922">mean(error × x)</span><br>
+      <span style="color:#58a6ff">intercept</span> = intercept − lr × <span style="color:#d29922">mean(error)</span>
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-top:12px;">
+      This is identical to the ball simulator from Phase 1 — just running for two weights (slope + intercept) simultaneously.
+      Try the learning rate slider: set it high and watch it overshoot, low and watch it crawl.
+    </p>
+  </div>
+</div>
+
+<!-- ===== TAB 4: EVALUATION ===== -->
+<div id="panel-eval" class="panel">
+  <h2>📊 How Do You Know If the Model is Good?</h2>
+  <div class="hook">
+    <div class="hook-label">💡 In plain English</div>
+    <p>MSE tells you the average error in squared units — hard to interpret. <strong>R²</strong> tells you the same thing as a percentage: "how much of the variation in bills does the model explain?"</p>
+  </div>
+
+  <div class="card">
+    <h3>R² Score — The Plain-English Score</h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+      <div style="background:#0d1117;border-radius:8px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:#3fb950;font-family:monospace;">1.0</div>
+        <div style="font-size:0.8rem;color:#8b949e;margin-top:6px;">Perfect — line passes through every point. Never happens with real data.</div>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:#d29922;font-family:monospace;">0.7</div>
+        <div style="font-size:0.8rem;color:#8b949e;margin-top:6px;">Good — model explains 70% of why bills go up and down. Acceptable for many real problems.</div>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:14px;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:800;color:#ff7b72;font-family:monospace;">0.1</div>
+        <div style="font-size:0.8rem;color:#8b949e;margin-top:6px;">Poor — model barely explains anything. The feature may not predict the target at all.</div>
+      </div>
+    </div>
+    <div class="info-box info-blue">
+      <strong style="color:#58a6ff">Formula:</strong> R² = 1 − (MSE of your model) ÷ (MSE of just guessing the average every time)<br>
+      In plain English: "how much better is the line than just guessing the average bill every month?"
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Live Scores — Trained Model vs Naive Guess</h3>
+    <canvas id="eval-canvas" width="860" height="280"></canvas>
+    <div class="stat-row" id="eval-stats"></div>
+    <button class="green" onclick="renderEval()" style="margin-top:8px;">▶ Compute Scores</button>
+    <div id="eval-msg" class="result-box" style="display:none;margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Before/After: Naive Guess vs Trained Model</h3>
+    <div class="two-col">
+      <div>
+        <p style="font-size:0.82rem;color:#ff7b72;margin-bottom:8px;font-weight:700;">⚠️ Naive: always guess the average</p>
+        <table id="naive-table"></table>
+      </div>
+      <div>
+        <p style="font-size:0.82rem;color:#3fb950;margin-bottom:8px;font-weight:700;">✅ Trained linear regression model</p>
+        <table id="model-table"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: QUIZ ===== -->
+<div id="panel-quiz" class="panel">
+  <h2>🎓 Quick Check</h2>
+  <div class="hook">
+    <div class="hook-label">3 questions</div>
+    <p>Answer these to confirm the Week 1 concepts are solid before moving to Week 2.</p>
+  </div>
+
+  <div id="quiz-body"></div>
+  <div id="quiz-result" style="display:none;"></div>
+</div>
+
+<script>
+// ============ DATA ============
+// Server count → monthly AWS bill (slightly noisy linear relationship)
+const DATA = [
+  {x:1, y:420}, {x:2, y:680}, {x:2, y:590}, {x:3, y:820},
+  {x:3, y:910}, {x:4, y:1050},{x:5, y:1280},{x:5, y:1190},
+  {x:6, y:1540},{x:6, y:1620},{x:7, y:1880},{x:7, y:1750},
+  {x:8, y:2100},{x:8, y:2050},{x:9, y:2300},{x:9, y:2390},
+  {x:10,y:2600},{x:10,y:2480},{x:4, y:980}, {x:6, y:1700},
+];
+const N = DATA.length;
+const xVals = DATA.map(d=>d.x), yVals = DATA.map(d=>d.y);
+const xMean = xVals.reduce((a,b)=>a+b)/N;
+const yMean = yVals.reduce((a,b)=>a+b)/N;
+
+// Compute OLS best fit
+const slopeOLS = xVals.reduce((s,x,i)=>s+(x-xMean)*(yVals[i]-yMean),0)/xVals.reduce((s,x)=>s+(x-xMean)**2,0);
+const interceptOLS = yMean - slopeOLS*xMean;
+
+function mse(slope, intercept) {
+  return DATA.reduce((s,d)=>s+(slope*d.x+intercept-d.y)**2,0)/N;
+}
+function r2(slope, intercept) {
+  const msePred = mse(slope,intercept);
+  const mseBase = DATA.reduce((s,d)=>s+(yMean-d.y)**2,0)/N;
+  return 1 - msePred/mseBase;
+}
+
+// ============ TAB LOGIC ============
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const tabs = ['what','game','auto','eval','quiz'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='game') { setTimeout(()=>{drawGameCanvas();}, 80); }
+  if(name==='auto') { setTimeout(()=>{autoReset();}, 80); }
+  if(name==='eval') { setTimeout(()=>{renderEval();}, 80); }
+  if(name==='quiz') { renderQuiz(); }
+}
+
+// ============ CANVAS HELPERS ============
+function canvasSetup(id) {
+  const c = document.getElementById(id);
+  const W = c.offsetWidth||860; c.width=W; c.height=parseInt(c.height)||320;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,c.height);
+  return {ctx, W, H:c.height, pad:{l:60,r:20,t:20,b:45}};
+}
+
+function toScreen(x, y, W, H, pad) {
+  const sx = pad.l + (x-0.5)/(10.5-0.5)*(W-pad.l-pad.r);
+  const sy = H - pad.b - (y-0)/(3000-0)*(H-pad.t-pad.b);
+  return [sx, Math.max(pad.t, Math.min(H-pad.b, sy))];
+}
+
+function drawAxes(ctx, W, H, pad) {
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+  ctx.fillStyle='#484f58'; ctx.font='11px monospace'; ctx.textAlign='center';
+  for(let x=1;x<=10;x++) {
+    const [sx]=toScreen(x,0,W,H,pad);
+    ctx.fillText(x,sx,H-pad.b+16);
+  }
+  ctx.textAlign='right';
+  for(let y=0;y<=3000;y+=500) {
+    const [,sy]=toScreen(0,y,W,H,pad);
+    ctx.fillText('$'+y,pad.l-6,sy+4);
+    ctx.strokeStyle='#21262d'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,sy); ctx.lineTo(W-pad.r,sy); ctx.stroke();
+  }
+  ctx.fillStyle='#8b949e'; ctx.font='12px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('EC2 Servers',pad.l+(W-pad.l-pad.r)/2,H-5);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Monthly Bill ($)',0,0); ctx.restore();
+}
+
+function drawPoints(ctx, W, H, pad, color='#58a6ff') {
+  DATA.forEach(d=>{
+    const [sx,sy]=toScreen(d.x,d.y,W,H,pad);
+    ctx.beginPath(); ctx.fillStyle=color+'cc'; ctx.arc(sx,sy,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+  });
+}
+
+function drawLine(ctx, W, H, pad, slope, intercept, color='#ff9944', dashed=false) {
+  ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5;
+  if(dashed) ctx.setLineDash([6,4]);
+  const [x0,y0]=toScreen(0.5, slope*0.5+intercept, W,H,pad);
+  const [x1,y1]=toScreen(10.5, slope*10.5+intercept, W,H,pad);
+  ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawErrors(ctx, W, H, pad, slope, intercept) {
+  DATA.forEach(d=>{
+    const pred = slope*d.x+intercept;
+    const [sx,sy]=toScreen(d.x,d.y,W,H,pad);
+    const [,spy]=toScreen(d.x,pred,W,H,pad);
+    ctx.beginPath(); ctx.strokeStyle='#ff7b7288'; ctx.lineWidth=1.5;
+    ctx.moveTo(sx,sy); ctx.lineTo(sx,spy); ctx.stroke();
+  });
+}
+
+// ============ GAME ============
+let gameSlope=0, gameIntercept=0;
+
+function drawGameCanvas() {
+  const {ctx,W,H,pad} = canvasSetup('game-canvas');
+  drawAxes(ctx,W,H,pad);
+  drawErrors(ctx,W,H,pad,gameSlope,gameIntercept);
+  drawPoints(ctx,W,H,pad);
+  drawLine(ctx,W,H,pad,gameSlope,gameIntercept,'#ff9944');
+  const bestMse = mse(slopeOLS,interceptOLS);
+  const myMse = mse(gameSlope,gameIntercept);
+  document.getElementById('slope-display').textContent = gameSlope;
+  document.getElementById('intercept-display').textContent = gameIntercept;
+  document.getElementById('your-mse').textContent = myMse.toFixed(0);
+  document.getElementById('best-mse').textContent = bestMse.toFixed(0);
+  const score = Math.max(0, Math.round((1 - (myMse-bestMse)/Math.max(1,myMse)) * 100));
+  document.getElementById('your-score').textContent = score + '%';
+  document.getElementById('your-score').style.color = score>85?'#3fb950':score>60?'#d29922':'#ff7b72';
+}
+
+function updateLine() {
+  gameSlope = parseInt(document.getElementById('slope-slider').value);
+  gameIntercept = parseInt(document.getElementById('intercept-slider').value);
+  drawGameCanvas();
+  if(mse(gameSlope,gameIntercept) < mse(slopeOLS,interceptOLS)*1.05) {
+    const msg = document.getElementById('game-msg');
+    msg.style.display='block';
+    msg.innerHTML = `<span class="green">🎉 Excellent! You found the best fit! Slope=${gameSlope}, Intercept=${gameIntercept}. MSE matches the model.</span>`;
+  }
+}
+
+function resetGame() {
+  gameSlope=0; gameIntercept=0;
+  document.getElementById('slope-slider').value=0;
+  document.getElementById('intercept-slider').value=0;
+  document.getElementById('game-msg').style.display='none';
+  drawGameCanvas();
+}
+
+function showAnswer() {
+  gameSlope = Math.round(slopeOLS/5)*5;
+  gameIntercept = Math.round(interceptOLS/10)*10;
+  document.getElementById('slope-slider').value=gameSlope;
+  document.getElementById('intercept-slider').value=gameIntercept;
+  const msg = document.getElementById('game-msg');
+  msg.style.display='block';
+  msg.innerHTML = `<span class="orange">Best fit revealed: slope=${gameSlope}, intercept=${gameIntercept}.\n` +
+    `Every extra server adds ~$${gameSlope} to the bill. Base cost (0 servers) ≈ $${gameIntercept}.\n` +
+    `MSE: ${mse(gameSlope,gameIntercept).toFixed(0)} — this is about as low as it gets for this dataset.</span>`;
+  drawGameCanvas();
+}
+
+// ============ AUTO TRAINING ============
+let autoSlope=50, autoIntercept=100, autoEpoch=0, autoRunning=false, autoTimer=null;
+let autoLR = 0.0001;
+
+const lrOptions = [0.00001,0.00005,0.0001,0.0003,0.001,0.003,0.01,0.03,0.1,0.3];
+
+function updateAutoLR() {
+  const idx = parseInt(document.getElementById('lr-slider').value)-1;
+  autoLR = lrOptions[idx];
+  document.getElementById('lr-val').textContent = autoLR;
+}
+
+function drawAutoCanvas() {
+  const {ctx,W,H,pad} = canvasSetup('auto-canvas');
+  drawAxes(ctx,W,H,pad);
+  drawErrors(ctx,W,H,pad,autoSlope,autoIntercept);
+  drawPoints(ctx,W,H,pad,'#58a6ff');
+  drawLine(ctx,W,H,pad,slopeOLS,interceptOLS,'#3fb95044',true);
+  drawLine(ctx,W,H,pad,autoSlope,autoIntercept,'#ff9944');
+  // Legend
+  ctx.font='11px sans-serif'; ctx.fillStyle='#3fb950'; ctx.textAlign='left';
+  ctx.fillText('── best fit (target)',pad.l+10,pad.t+16);
+  ctx.fillStyle='#ff9944';
+  ctx.fillText('── current model',pad.l+10,pad.t+32);
+  document.getElementById('auto-epoch').textContent=autoEpoch;
+  document.getElementById('auto-slope').textContent=autoSlope.toFixed(1);
+  document.getElementById('auto-intercept').textContent=autoIntercept.toFixed(1);
+  const m=mse(autoSlope,autoIntercept);
+  document.getElementById('auto-mse').textContent=m.toFixed(0);
+  document.getElementById('auto-mse').style.color = m<50000?'#3fb950':m<200000?'#d29922':'#ff7b72';
+}
+
+function autoStep() {
+  let gSlope=0, gIntercept=0;
+  DATA.forEach(d=>{
+    const err = autoSlope*d.x+autoIntercept-d.y;
+    gSlope += err*d.x; gIntercept += err;
+  });
+  gSlope/=N; gIntercept/=N;
+  autoSlope -= autoLR*gSlope;
+  autoIntercept -= autoLR*gIntercept;
+  autoEpoch++;
+  drawAutoCanvas();
+  const m=mse(autoSlope,autoIntercept);
+  if(m<mse(slopeOLS,interceptOLS)*1.05 || autoEpoch>5000) {
+    clearInterval(autoTimer); autoRunning=false;
+    document.getElementById('auto-btn').textContent='▶ Start Training';
+    const msg=document.getElementById('auto-msg');
+    msg.style.display='block';
+    msg.innerHTML = m<mse(slopeOLS,interceptOLS)*1.05
+      ? `<span class="green">✓ Converged in ${autoEpoch} epochs! Slope≈${autoSlope.toFixed(0)}, Intercept≈${autoIntercept.toFixed(0)}</span>`
+      : `<span class="yellow">⚠️ Stopped at 5000 epochs. Try a higher learning rate.</span>`;
+  }
+}
+
+function autoRun() {
+  if(autoRunning) {
+    clearInterval(autoTimer); autoRunning=false;
+    document.getElementById('auto-btn').textContent='▶ Start Training'; return;
+  }
+  autoRunning=true;
+  document.getElementById('auto-btn').textContent='⏸ Pause';
+  document.getElementById('auto-msg').style.display='none';
+  autoTimer=setInterval(autoStep,30);
+}
+
+function autoReset() {
+  clearInterval(autoTimer); autoRunning=false;
+  autoSlope=50; autoIntercept=100; autoEpoch=0;
+  document.getElementById('auto-btn').textContent='▶ Start Training';
+  document.getElementById('auto-msg').style.display='none';
+  drawAutoCanvas();
+}
+
+// ============ EVALUATION ============
+function renderEval() {
+  const {ctx,W,H,pad}=canvasSetup('eval-canvas');
+  drawAxes(ctx,W,H,pad);
+  // Naive: horizontal line at yMean
+  drawLine(ctx,W,H,pad,0,yMean,'#ff7b7288',true);
+  drawErrors(ctx,W,H,pad,slopeOLS,interceptOLS);
+  drawPoints(ctx,W,H,pad);
+  drawLine(ctx,W,H,pad,slopeOLS,interceptOLS,'#ff9944');
+  ctx.font='11px sans-serif'; ctx.fillStyle='#ff7b72'; ctx.textAlign='left';
+  ctx.fillText(`── naive (always guess $${Math.round(yMean)})`,pad.l+8,pad.t+16);
+  ctx.fillStyle='#ff9944'; ctx.fillText('── trained model',pad.l+8,pad.t+32);
+
+  const mseTrained=mse(slopeOLS,interceptOLS);
+  const mseNaive=DATA.reduce((s,d)=>s+(yMean-d.y)**2,0)/N;
+  const r2Score=r2(slopeOLS,interceptOLS);
+
+  document.getElementById('eval-stats').innerHTML=`
+    <div class="stat">Naive MSE (avg guess): <span style="color:#ff7b72;">${mseNaive.toFixed(0)}</span></div>
+    <div class="stat">Model MSE: <span class="green">${mseTrained.toFixed(0)}</span></div>
+    <div class="stat">R² score: <span class="green">${r2Score.toFixed(2)}</span></div>
+    <div class="stat">Improvement: <span class="orange">${((1-mseTrained/mseNaive)*100).toFixed(0)}% less error</span></div>`;
+
+  const msg=document.getElementById('eval-msg');
+  msg.style.display='block';
+  msg.innerHTML=`<span class="green">R² = ${r2Score.toFixed(2)}</span> — the model explains <span class="orange">${(r2Score*100).toFixed(0)}%</span> of why bills vary month to month.\n`+
+    `MSE dropped from <span class="red">${mseNaive.toFixed(0)}</span> (naive) → <span class="green">${mseTrained.toFixed(0)}</span> (model).\n`+
+    `Slope = ${slopeOLS.toFixed(0)}: each extra server adds ~$${slopeOLS.toFixed(0)}/month.\n`+
+    `Intercept = ${interceptOLS.toFixed(0)}: base monthly cost with 0 servers.`;
+
+  // Before/After tables
+  const rows=DATA.slice(0,6);
+  const naiveHtml=`<thead><tr><th>Servers</th><th>Actual</th><th>Guess</th><th>Error</th></tr></thead><tbody>${
+    rows.map(d=>{const err=Math.abs(yMean-d.y);return`<tr><td>${d.x}</td><td>$${d.y}</td><td style="color:#ff7b72">$${Math.round(yMean)}</td><td class="red">$${Math.round(err)}</td></tr>`;}).join('')
+  }</tbody>`;
+  const modelHtml=`<thead><tr><th>Servers</th><th>Actual</th><th>Predicted</th><th>Error</th></tr></thead><tbody>${
+    rows.map(d=>{const pred=slopeOLS*d.x+interceptOLS;const err=Math.abs(pred-d.y);return`<tr><td>${d.x}</td><td>$${d.y}</td><td style="color:#3fb950">$${Math.round(pred)}</td><td class="green">$${Math.round(err)}</td></tr>`;}).join('')
+  }</tbody>`;
+  document.getElementById('naive-table').innerHTML=naiveHtml;
+  document.getElementById('model-table').innerHTML=modelHtml;
+}
+
+// ============ QUIZ ============
+const QUIZ=[
+  {
+    q:'What does the slope of a linear regression line tell you?',
+    opts:[
+      ['The starting value of the prediction when input = 0', false],
+      ['How much the prediction changes for each one-unit increase in the input', true],
+      ['The average error of the model across all data points', false],
+    ],
+    exp:'Slope = "rise over run." If slope = 280, every extra server adds $280 to the predicted bill. A slope of 0 means the input has no effect on the prediction.'
+  },
+  {
+    q:'MSE is very high for your model. What does that mean in plain English?',
+    opts:[
+      ['The dataset is too large to process', false],
+      ['The model\'s predictions are far from the actual values on average — the line is a poor fit', true],
+      ['The model trained too many times and memorised the data', false],
+    ],
+    exp:'MSE = average of (prediction − actual)². Large MSE = the line misses the data points by a lot. Small MSE = the line runs close to most points. MSE = 0 would mean a perfect fit (never happens with real noisy data).'
+  },
+  {
+    q:'R² = 0.85. What does this mean?',
+    opts:[
+      ['The model is correct 85% of the time', false],
+      ['The model\'s error is 85% smaller than randomly guessing', false],
+      ['The model explains 85% of why the target values vary — 15% of the variation is still unexplained', true],
+    ],
+    exp:'R² compares your model to the dumbest baseline: always guessing the average. R²=0.85 means your model is 85% of the way toward a perfect explanation. The remaining 15% is noise or factors not captured by your feature.'
+  },
+];
+
+let quizDone=new Set(), quizScore=0;
+function renderQuiz() {
+  if(document.getElementById('quiz-body').innerHTML) return;
+  let html='';
+  QUIZ.forEach((q,qi)=>{
+    html+=`<div class="card"><div class="quiz-q"><strong>${q.q}</strong></div>`;
+    q.opts.forEach((opt,oi)=>{
+      html+=`<button class="opt" onclick="qAns(${qi},${oi})" id="q${qi}o${oi}">${opt[0]}</button>`;
+    });
+    html+=`<div id="q${qi}-exp" style="display:none;margin-top:10px;font-size:0.84rem;color:#8b949e;background:#21262d;padding:12px;border-radius:6px;"></div>`;
+    html+=`<div class="celebrate" id="q${qi}-cel">✓ Correct!</div></div>`;
+  });
+  document.getElementById('quiz-body').innerHTML=html;
+}
+
+function qAns(qi,oi) {
+  if(quizDone.has(qi)) return;
+  quizDone.add(qi);
+  const q=QUIZ[qi]; const correct=q.opts[oi][1];
+  document.getElementById(`q${qi}o${oi}`).className='opt '+(correct?'correct':'wrong');
+  if(!correct) QUIZ[qi].opts.forEach((_,i)=>{ if(QUIZ[qi].opts[i][1]) document.getElementById(`q${qi}o${i}`).className='opt correct'; });
+  [0,1,2].forEach(i=>{ const b=document.getElementById(`q${qi}o${i}`); if(b) b.disabled=true; });
+  document.getElementById(`q${qi}-exp`).style.display='block';
+  document.getElementById(`q${qi}-exp`).textContent='💡 '+q.exp;
+  if(correct) { quizScore++; document.getElementById(`q${qi}-cel`).style.display='block'; }
+  if(quizDone.size===QUIZ.length) {
+    setTimeout(()=>{
+      const res=document.getElementById('quiz-result');
+      res.style.display='block';
+      res.innerHTML=`<div class="card" style="text-align:center;">
+        <div style="font-size:2rem;font-weight:800;color:${quizScore===3?'#3fb950':'#d29922'};margin-bottom:8px;">${quizScore} / 3</div>
+        <p style="color:#8b949e;">${quizScore===3?'Perfect — Week 1 complete. Ready for Week 2!':quizScore===2?'Almost — review the explanation above for the one you missed.':'Review the What Is It? tab and try again.'}</p>
+        ${quizScore>=2?'<br><a href="../week2/index.html" style="color:#ff9944;font-size:0.95rem;">→ Go to Week 2: Overfitting Arena</a>':''}
+      </div>`;
+    },500);
+  }
+}
+
+// Init
+setTimeout(()=>{ drawGameCanvas(); },100);
+</script>
+</body>
+</html>
