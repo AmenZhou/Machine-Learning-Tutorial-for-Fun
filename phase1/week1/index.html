@@ -84,6 +84,68 @@
   .result-matrix { background: #21262d; border-radius: 8px; padding: 16px 24px; text-align: center; min-width: 160px; }
   .result-matrix .dims { font-size: 1.8rem; font-weight: 800; }
 
+  /* MATRIX — enhanced visuals */
+  .analogy-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+  .analogy-card {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px;
+    font-size: 0.85rem; line-height: 1.7;
+  }
+  .analogy-card .icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .analogy-card strong { color: #e6edf3; display: block; margin-bottom: 4px; }
+  .analogy-card p { color: #8b949e; }
+  .vis-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 20px 0; }
+  .mat-grid { display: inline-flex; flex-direction: column; gap: 3px; }
+  .mat-row { display: flex; gap: 3px; }
+  .mat-cell {
+    width: 34px; height: 34px; border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; font-size: 0.75rem; font-family: monospace; font-weight: 700;
+    transition: background 0.3s, color 0.3s;
+  }
+  .cell-normal { background: #21262d; color: #8b949e; }
+  .cell-col { background: #1f3a5f; color: #58a6ff; }  /* A's cols — must match B's rows */
+  .cell-row { background: #3a1f1f; color: #ff9944; }  /* B's rows — must match A's cols */
+  .cell-match { background: #1a2a10; color: #3fb950; border: 1px solid #2ea043; }
+  .cell-nomatch { background: #3a0000; color: #ff7b72; border: 1px solid #f85149; }
+  .cell-result { background: #1f2a3a; color: #bc8cff; }
+  .mat-label { font-size: 0.78rem; color: #8b949e; text-align: center; margin-top: 6px; }
+  .dim-bracket {
+    font-size: 2.2rem; color: #484f58; line-height: 1; align-self: center;
+  }
+  .match-indicator {
+    font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700;
+    align-self: center; white-space: nowrap;
+  }
+  .match-ok { background: #1a7f37; color: #3fb950; }
+  .match-fail { background: #5a0000; color: #ff7b72; }
+  .nn-layer {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .nn-nodes { display: flex; flex-direction: column; gap: 5px; }
+  .nn-node {
+    width: 44px; height: 18px; border-radius: 9px; display: flex; align-items: center;
+    justify-content: center; font-size: 0.65rem; font-weight: 700;
+  }
+  .nn-arrow { font-size: 1.4rem; color: #484f58; align-self: center; }
+  .nn-weight {
+    font-size: 0.72rem; color: #8b949e; text-align: center;
+    background: #21262d; border-radius: 4px; padding: 3px 8px; margin-top: 4px;
+    font-family: monospace;
+  }
+  .dot-step {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+    padding: 16px; margin-bottom: 12px; font-size: 0.88rem; line-height: 1.9;
+  }
+  .dot-step.active-step { border-color: #58a6ff; }
+  .highlight-num { color: #58a6ff; font-weight: 700; }
+  .highlight-result { color: #3fb950; font-weight: 700; font-size: 1.1rem; }
+  .dim-input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .dim-input-row input[type=number] {
+    background: #0d1117; border: 1px solid #30363d; color: #e6edf3;
+    border-radius: 4px; padding: 8px 10px; width: 56px; font-size: 1rem; text-align: center;
+  }
+  .dim-tag { font-size: 0.75rem; color: #8b949e; padding: 3px 8px; background: #21262d; border-radius: 4px; }
+  @media (max-width: 640px) { .analogy-grid { grid-template-columns: 1fr; } }
+
   /* GRADIENT DESCENT */
   canvas { border-radius: 8px; display: block; max-width: 100%; }
   .gd-controls { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
@@ -185,50 +247,253 @@
 <div id="panel-matrix" class="panel">
   <h2>📐 Matrix Dimension Matcher</h2>
   <p class="subtitle">
-    Matrix multiplication <strong>A × B</strong> is only valid when A's columns = B's rows. The result shape is
-    (A's rows) × (B's columns). Change the dimensions and see instantly if it works.
+    Before touching the checker — understand <em>what a matrix is</em> and <em>why ML needs it</em>.
+    Then use the live tool to see what happens when dimensions do or don't match.
   </p>
 
+  <!-- ── WHAT IS A MATRIX? ── -->
   <div class="card">
-    <h3>Dimension Checker</h3>
-    <div class="matrix-inputs">
-      <div class="matrix-box">
-        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Matrix A</div>
-        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
-          <input type="number" id="a-rows" value="3" min="1" max="9" oninput="checkMatrix()">
-          <span style="color:#8b949e">×</span>
-          <input type="number" id="a-cols" value="4" min="1" max="9" oninput="checkMatrix()">
-        </div>
-        <div id="a-dim" class="dims" style="margin-top:10px;">3×4</div>
+    <h3>What is a Matrix?</h3>
+    <div class="analogy-grid">
+      <div class="analogy-card">
+        <div class="icon">📊</div>
+        <strong>A grid of numbers</strong>
+        <p>A matrix is just a table — rows and columns of numbers. A 3×4 matrix has 3 rows and 4 columns, like a spreadsheet with 3 rows and 4 data columns.</p>
       </div>
-      <div class="operator">×</div>
-      <div class="matrix-box">
-        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Matrix B</div>
-        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
-          <input type="number" id="b-rows" value="4" min="1" max="9" oninput="checkMatrix()">
-          <span style="color:#8b949e">×</span>
-          <input type="number" id="b-cols" value="2" min="1" max="9" oninput="checkMatrix()">
-        </div>
-        <div id="b-dim" class="dims" style="margin-top:10px;">4×2</div>
+      <div class="analogy-card">
+        <div class="icon">📏</div>
+        <strong>Reading the notation</strong>
+        <p><strong style="color:#58a6ff">rows × cols</strong> — always rows first, columns second. A(3×4) means 3 rows, 4 columns. Total of 12 individual numbers inside.</p>
       </div>
-      <div class="operator">=</div>
-      <div class="result-matrix" id="result-matrix">
-        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Result</div>
-        <div class="dims green">3×2</div>
-        <div style="font-size:0.75rem;color:#3fb950;margin-top:6px;">✓ Valid</div>
+      <div class="analogy-card">
+        <div class="icon">🧠</div>
+        <strong>Why ML uses matrices</strong>
+        <p>Instead of computing one prediction at a time, you stack 1,000 examples into a matrix and compute all predictions in a single operation — that's what makes GPUs fast.</p>
       </div>
     </div>
+
+    <!-- Visual example of a real matrix -->
+    <p style="font-size:0.82rem;color:#8b949e;margin-bottom:12px;">
+      Example: A matrix storing <strong style="color:#e6edf3">user features</strong> for 3 users × 4 attributes
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="font-size:0.82rem;border-collapse:collapse;margin-bottom:8px;">
+        <thead>
+          <tr>
+            <th style="background:#21262d;padding:8px 16px;color:#8b949e;border:1px solid #30363d;"></th>
+            <th style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;">Age</th>
+            <th style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;">Salary</th>
+            <th style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;">Purchases</th>
+            <th style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;">Days Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="background:#21262d;padding:8px 16px;color:#8b949e;border:1px solid #30363d;font-weight:700;">User 1</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">28</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">52000</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">14</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">90</td>
+          </tr>
+          <tr>
+            <td style="background:#21262d;padding:8px 16px;color:#8b949e;border:1px solid #30363d;font-weight:700;">User 2</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">34</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">71000</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">7</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">45</td>
+          </tr>
+          <tr>
+            <td style="background:#21262d;padding:8px 16px;color:#8b949e;border:1px solid #30363d;font-weight:700;">User 3</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">22</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">38000</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">31</td>
+            <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">200</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.82rem;color:#8b949e;">This is a <strong style="color:#58a6ff">3×4 matrix</strong> — 3 users (rows), 4 features per user (columns). In Python: <code style="color:#3fb950">X = np.array([[28,52000,14,90],[34,71000,7,45],[22,38000,31,200]])</code></p>
+  </div>
+
+  <!-- ── WHY MULTIPLY? ── -->
+  <div class="card">
+    <h3>Why Do We Multiply Matrices?</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+      Matrix multiplication is how an ML model <strong style="color:#e6edf3">transforms data</strong> from one form to another.
+      Think of it like passing your data through a filter:
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:16px;font-size:0.88rem;line-height:2.1;font-family:monospace;margin-bottom:14px;">
+      Input data X:    <span style="color:#58a6ff">3 users × 4 features</span>   (shape: 3×4)<br>
+      Weight matrix W: <span style="color:#d29922">4 features → 2 scores</span>   (shape: 4×2)<br>
+      Result X @ W:    <span style="color:#3fb950">3 users × 2 scores</span>     (shape: 3×2)<br>
+      <br>
+      <span style="color:#8b949e"># Each user now has 2 "processed" scores instead of 4 raw features</span><br>
+      <span style="color:#8b949e"># This is literally what a neural network layer does</span>
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;line-height:1.7;">
+      The multiplication is only possible because <strong style="color:#e6edf3">X has 4 columns</strong> and <strong style="color:#e6edf3">W has 4 rows</strong> — they share the number 4.
+      This is the dimension rule.
+    </p>
+  </div>
+
+  <!-- ── DIMENSION RULE ── -->
+  <div class="card">
+    <h3>The Golden Rule: Inner Dimensions Must Match</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:16px;">
+      For <strong style="color:#58a6ff">A(m × n)</strong> × <strong style="color:#d29922">B(n × p)</strong>:
+      the <em>inner</em> two numbers must be equal. The result is <strong style="color:#3fb950">(m × p)</strong>.
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:18px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:1.1rem;font-family:monospace;line-height:2.4;">
+        A <span style="color:#58a6ff;font-size:1.3rem;font-weight:800;">(3 × <u>4</u>)</span>
+        &nbsp;×&nbsp;
+        B <span style="color:#d29922;font-size:1.3rem;font-weight:800;">(<u>4</u> × 2)</span>
+        &nbsp;=&nbsp;
+        C <span style="color:#3fb950;font-size:1.3rem;font-weight:800;">(3 × 2)</span>
+        &nbsp;&nbsp;<span style="color:#3fb950">✓</span><br>
+        <span style="color:#8b949e;font-size:0.82rem;">↑ A's cols (4) = B's rows (4) — match! &nbsp;&nbsp; Result uses A's rows (3) and B's cols (2)</span>
+      </div>
+      <div style="font-size:1.1rem;font-family:monospace;line-height:2.4;margin-top:8px;">
+        A <span style="color:#ff7b72;font-size:1.3rem;font-weight:800;">(3 × <u>4</u>)</span>
+        &nbsp;×&nbsp;
+        B <span style="color:#ff7b72;font-size:1.3rem;font-weight:800;">(<u>5</u> × 2)</span>
+        &nbsp;=&nbsp;
+        <span style="color:#ff7b72;font-size:1.3rem;font-weight:800;">✗ Error!</span><br>
+        <span style="color:#8b949e;font-size:0.82rem;">↑ A's cols (4) ≠ B's rows (5) — mismatch! Python throws ValueError.</span>
+      </div>
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;line-height:1.7;">
+      <strong style="color:#e6edf3">Memory trick:</strong> write out the shapes side by side — <code style="color:#58a6ff">(3×4)(4×2)</code>.
+      The two <em>middle</em> numbers must be the same. Cross them out — what's left is your result shape: <code style="color:#3fb950">(3×2)</code>.
+    </p>
+  </div>
+
+  <!-- ── INTERACTIVE CHECKER ── -->
+  <div class="card">
+    <h3>Interactive Dimension Checker</h3>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">Change the dimensions and watch the grid update in real time.</p>
+
+    <div class="dim-input-row">
+      <span class="dim-tag">Matrix A</span>
+      <input type="number" id="a-rows" value="3" min="1" max="6" oninput="checkMatrix()">
+      <span style="color:#8b949e;">rows ×</span>
+      <input type="number" id="a-cols" value="4" min="1" max="6" oninput="checkMatrix()">
+      <span style="color:#8b949e;">cols</span>
+      <span style="color:#8b949e;margin:0 8px;">×</span>
+      <span class="dim-tag">Matrix B</span>
+      <input type="number" id="b-rows" value="4" min="1" max="6" oninput="checkMatrix()">
+      <span style="color:#8b949e;">rows ×</span>
+      <input type="number" id="b-cols" value="2" min="1" max="6" oninput="checkMatrix()">
+      <span style="color:#8b949e;">cols</span>
+    </div>
+
+    <!-- Visual grid -->
+    <div class="vis-row" id="matrix-vis"></div>
+
     <div id="matrix-explain" class="result-box"></div>
   </div>
 
+  <!-- ── DOT PRODUCT WALKTHROUGH ── -->
   <div class="card">
-    <h3>The Rule</h3>
-    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
-      For <strong style="color:#e6edf3">A(m×n) × B(n×p)</strong>: the inner dimensions (<em>n</em>) must match.
-      The result is <strong style="color:#e6edf3">m×p</strong>.<br><br>
-      In neural networks, each layer is a matrix multiply — the shapes must "flow" from input → hidden → output.
-      Getting this wrong is one of the most common bugs in ML code.
+    <h3>How One Result Cell is Computed — The Dot Product</h3>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">
+      Each cell in the result matrix is computed by taking one <strong style="color:#58a6ff">row from A</strong>
+      and one <strong style="color:#d29922">column from B</strong>, multiplying element-by-element, then summing.
+      This is called a <em>dot product</em>.
     </p>
+    <div style="background:#0d1117;border-radius:8px;padding:16px;font-family:monospace;font-size:0.88rem;line-height:2.1;margin-bottom:14px;">
+      A = <span style="color:#58a6ff">[[1, 2, 3],   </span><span style="color:#8b949e">← row 0 of A</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58">[4, 5, 6]]   </span><span style="color:#8b949e">← row 1 of A</span><br><br>
+      B = <span style="color:#d29922">[[7,  10],   </span><span style="color:#8b949e">← row 0 of B</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#d29922">[8,  11],   </span><span style="color:#8b949e">← row 1 of B</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#d29922">[9,  12]]   </span><span style="color:#8b949e">← row 2 of B</span>
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:12px;">
+      To compute <strong style="color:#3fb950">C[0][0]</strong> (top-left of result): take A's row 0 · B's column 0:
+    </p>
+    <div class="dot-step active-step">
+      <span style="color:#58a6ff">[1, 2, 3]</span> · <span style="color:#d29922">[7, 8, 9]</span><br>
+      = (<span class="highlight-num">1×7</span>) + (<span class="highlight-num">2×8</span>) + (<span class="highlight-num">3×9</span>)<br>
+      = <span class="highlight-num">7</span> + <span class="highlight-num">16</span> + <span class="highlight-num">27</span>
+      = <span class="highlight-result">50</span>
+    </div>
+    <p style="font-size:0.85rem;color:#8b949e;margin-top:12px;line-height:1.7;">
+      You do this for every (row of A, column of B) pair. A(2×3) × B(3×2) produces 2×2 = <strong style="color:#3fb950">4 result cells</strong>,
+      each computed by one dot product. In code: <code style="color:#3fb950">C = A @ B</code> or <code style="color:#3fb950">C = np.dot(A, B)</code>
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;font-family:monospace;font-size:0.88rem;line-height:2;margin-top:12px;">
+      <span style="color:#8b949e"># Full result:</span><br>
+      C[0][0] = <span style="color:#3fb950">50</span>  &nbsp;<span style="color:#484f58">(A row 0 · B col 0)</span><br>
+      C[0][1] = <span style="color:#3fb950">68</span>  &nbsp;<span style="color:#484f58">(A row 0 · B col 1: 1×10 + 2×11 + 3×12)</span><br>
+      C[1][0] = <span style="color:#3fb950">122</span> &nbsp;<span style="color:#484f58">(A row 1 · B col 0: 4×7 + 5×8 + 6×9)</span><br>
+      C[1][1] = <span style="color:#3fb950">167</span> &nbsp;<span style="color:#484f58">(A row 1 · B col 1: 4×10 + 5×11 + 6×12)</span>
+    </div>
+  </div>
+
+  <!-- ── ML NEURAL NETWORK EXAMPLE ── -->
+  <div class="card">
+    <h3>Real ML Example: A Neural Network Forward Pass</h3>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">
+      A neural network is just a chain of matrix multiplications.
+      Each layer is one matrix × the output of the previous layer.
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#8b949e;margin-bottom:12px;">Scenario: predict whether a user will buy (1) or not (0), given 4 features.</p>
+      <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <!-- Input -->
+        <div class="nn-layer">
+          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">INPUT</div>
+          <div class="nn-nodes">
+            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">age</div>
+            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">salary</div>
+            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">buys</div>
+            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">days</div>
+          </div>
+          <div class="nn-weight">1 × 4</div>
+        </div>
+        <!-- W1 -->
+        <div class="nn-arrow" style="align-self:center;">
+          <div style="font-size:0.72rem;color:#8b949e;text-align:center;margin-bottom:4px;">× W1</div>
+          →
+          <div class="nn-weight" style="margin-top:4px;">4 × 3</div>
+        </div>
+        <!-- Hidden -->
+        <div class="nn-layer">
+          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">HIDDEN</div>
+          <div class="nn-nodes">
+            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h1</div>
+            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h2</div>
+            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h3</div>
+          </div>
+          <div class="nn-weight">1 × 3</div>
+        </div>
+        <!-- W2 -->
+        <div class="nn-arrow" style="align-self:center;">
+          <div style="font-size:0.72rem;color:#8b949e;text-align:center;margin-bottom:4px;">× W2</div>
+          →
+          <div class="nn-weight" style="margin-top:4px;">3 × 1</div>
+        </div>
+        <!-- Output -->
+        <div class="nn-layer">
+          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">OUTPUT</div>
+          <div class="nn-nodes">
+            <div class="nn-node" style="background:#1a3a1a;color:#3fb950;">buy?</div>
+          </div>
+          <div class="nn-weight">1 × 1</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-family:monospace;font-size:0.88rem;background:#0d1117;border-radius:8px;padding:14px;line-height:2.1;">
+      Step 1: <span style="color:#58a6ff">(1×4)</span> @ <span style="color:#d29922">(4×3)</span> = <span style="color:#3fb950">(1×3)</span> &nbsp;<span style="color:#484f58">✓ inner: 4==4</span><br>
+      Step 2: <span style="color:#58a6ff">(1×3)</span> @ <span style="color:#d29922">(3×1)</span> = <span style="color:#3fb950">(1×1)</span> &nbsp;<span style="color:#484f58">✓ inner: 3==3</span><br><br>
+      <span style="color:#8b949e"># In Python (PyTorch-style):</span><br>
+      hidden = input @ W1 &nbsp;&nbsp;<span style="color:#8b949e"># (1×4) @ (4×3) → (1×3)</span><br>
+      output = hidden @ W2 &nbsp;&nbsp;<span style="color:#8b949e"># (1×3) @ (3×1) → (1×1)</span>
+    </div>
+    <div style="margin-top:14px;background:#da363322;border:1px solid #f85149;border-radius:8px;padding:12px;font-size:0.85rem;color:#ff7b72;">
+      ⚠️ <strong>Most common ML bug:</strong> Getting a shape mismatch. e.g. W1 is accidentally (4×4) instead of (4×3) — Python throws
+      <code>RuntimeError: mat1 and mat2 shapes cannot be multiplied</code>. The dimension checker above helps you catch this before writing any training code.
+    </div>
   </div>
 </div>
 
@@ -427,31 +692,116 @@ function renderGroupTable(means) {
 }
 
 // ============ MATRIX ============
+function makeGrid(rows, cols, colClass, rowClass) {
+  // colClass: applied to all cells in cols direction
+  // rowClass: applied to all cells in rows direction
+  // For Matrix A: highlight cols (the "shared" side) in blue
+  // For Matrix B: highlight rows (the "shared" side) in orange
+  let html = '<div class="mat-grid">';
+  for (let r = 0; r < rows; r++) {
+    html += '<div class="mat-row">';
+    for (let c = 0; c < cols; c++) {
+      const cls = colClass && c === cols - 1 ? colClass :
+                  rowClass && r === 0 ? rowClass : 'cell-normal';
+      const val = Math.floor(Math.random() * 9) + 1;
+      html += `<div class="mat-cell ${cls}">${val}</div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function makeResultGrid(rows, cols, valid) {
+  let html = '<div class="mat-grid">';
+  for (let r = 0; r < rows; r++) {
+    html += '<div class="mat-row">';
+    for (let c = 0; c < cols; c++) {
+      html += `<div class="mat-cell ${valid ? 'cell-result' : 'cell-nomatch'}">?</div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
 function checkMatrix() {
-  const ar = parseInt(document.getElementById('a-rows').value) || 1;
-  const ac = parseInt(document.getElementById('a-cols').value) || 1;
-  const br = parseInt(document.getElementById('b-rows').value) || 1;
-  const bc = parseInt(document.getElementById('b-cols').value) || 1;
-  document.getElementById('a-dim').textContent = ar + '×' + ac;
-  document.getElementById('b-dim').textContent = br + '×' + bc;
+  const ar = Math.max(1, Math.min(6, parseInt(document.getElementById('a-rows').value) || 1));
+  const ac = Math.max(1, Math.min(6, parseInt(document.getElementById('a-cols').value) || 1));
+  const br = Math.max(1, Math.min(6, parseInt(document.getElementById('b-rows').value) || 1));
+  const bc = Math.max(1, Math.min(6, parseInt(document.getElementById('b-cols').value) || 1));
   const valid = ac === br;
-  const resEl = document.getElementById('result-matrix');
-  resEl.innerHTML = `
-    <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Result</div>
-    <div class="dims ${valid ? 'green' : 'red'}">${valid ? ar + '×' + bc : '✗'}</div>
-    <div style="font-size:0.75rem;color:${valid ? '#3fb950' : '#ff7b72'};margin-top:6px;">${valid ? '✓ Valid' : '✗ Invalid'}</div>
+
+  // Build visual grid
+  const matchCls = valid ? 'cell-match' : 'cell-nomatch';
+
+  // Matrix A: highlight last column (the cols that must match B's rows)
+  let aHtml = '<div class="mat-grid">';
+  for (let r = 0; r < ar; r++) {
+    aHtml += '<div class="mat-row">';
+    for (let c = 0; c < ac; c++) {
+      const cls = c === ac - 1 ? matchCls : 'cell-normal';
+      aHtml += `<div class="mat-cell ${cls}">${Math.floor(Math.random()*9)+1}</div>`;
+    }
+    aHtml += '</div>';
+  }
+  aHtml += `<div class="mat-label" style="color:${valid?'#3fb950':'#ff7b72'};">${ar}×<u>${ac}</u></div></div>`;
+
+  // Matrix B: highlight first row (the rows that must match A's cols)
+  let bHtml = '<div class="mat-grid">';
+  for (let r = 0; r < br; r++) {
+    bHtml += '<div class="mat-row">';
+    for (let c = 0; c < bc; c++) {
+      const cls = r === 0 ? matchCls : 'cell-normal';
+      bHtml += `<div class="mat-cell ${cls}">${Math.floor(Math.random()*9)+1}</div>`;
+    }
+    bHtml += '</div>';
+  }
+  bHtml += `<div class="mat-label" style="color:${valid?'#3fb950':'#ff7b72'};"><u>${br}</u>×${bc}</div></div>`;
+
+  // Result grid
+  let cHtml = valid
+    ? makeResultGrid(ar, bc, true) + `<div class="mat-label" style="color:#bc8cff;">${ar}×${bc}</div>`
+    : `<div style="font-size:2rem;color:#ff7b72;text-align:center;padding:10px;">✗</div><div class="mat-label" style="color:#ff7b72;">Error</div>`;
+
+  const matchIndicator = `<div class="match-indicator ${valid?'match-ok':'match-fail'}">
+    ${valid ? `✓ ${ac} = ${br} match` : `✗ ${ac} ≠ ${br}`}
+  </div>`;
+
+  document.getElementById('matrix-vis').innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:0.75rem;color:#8b949e;margin-bottom:8px;">Matrix A (${ar}×${ac})</div>
+      ${aHtml}
+    </div>
+    <div class="operator" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span>×</span>
+      ${matchIndicator}
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:0.75rem;color:#8b949e;margin-bottom:8px;">Matrix B (${br}×${bc})</div>
+      ${bHtml}
+    </div>
+    <div class="operator">=</div>
+    <div style="text-align:center;">
+      <div style="font-size:0.75rem;color:#8b949e;margin-bottom:8px;">Result ${valid?'('+ar+'×'+bc+')':'(invalid)'}</div>
+      ${cHtml}
+    </div>
   `;
+
   const expl = document.getElementById('matrix-explain');
   if (valid) {
-    expl.innerHTML = `<span class="green">✓ A(${ar}×${ac}) × B(${br}×${bc}) = C(${ar}×${bc})</span>\n` +
-      `  Inner dimensions match: A.cols(${ac}) == B.rows(${br})  ✓\n` +
-      `  Result: ${ar} rows × ${bc} cols\n\n` +
+    expl.innerHTML =
+      `<span class="green">✓ A(${ar}×${ac}) × B(${br}×${bc}) = C(${ar}×${bc})</span>\n` +
+      `  Inner dimensions: A.cols = <span class="green">${ac}</span>  ==  B.rows = <span class="green">${br}</span>  ✓\n` +
+      `  Result shape: <span class="blue">${ar} rows × ${bc} cols</span>  (${ar*bc} total cells)\n` +
+      `  Each result cell = 1 dot product of a row from A with a column from B\n\n` +
       `  Python:\n  A = np.random.randn(${ar}, ${ac})\n  B = np.random.randn(${br}, ${bc})\n  C = A @ B   # shape: (${ar}, ${bc})`;
   } else {
-    expl.innerHTML = `<span class="red">✗ Cannot multiply A(${ar}×${ac}) × B(${br}×${bc})</span>\n` +
-      `  A.cols(${ac}) ≠ B.rows(${br})  — inner dimensions must match.\n\n` +
-      `  Fix: Set B rows = ${ac}  (or A cols = ${br})\n\n` +
-      `  This would throw in Python:\n  ValueError: matmul: Input operand 1 has a mismatch\n  in its core dimension 0, with gufunc signature\n  (n?,k),(k,m?)->(n?,m?)`;
+    expl.innerHTML =
+      `<span class="red">✗ Cannot multiply A(${ar}×${ac}) × B(${br}×${bc})</span>\n` +
+      `  A.cols = <span class="red">${ac}</span>  ≠  B.rows = <span class="red">${br}</span> — must be equal!\n\n` +
+      `  To fix: change B rows to ${ac}, or A cols to ${br}\n\n` +
+      `  Python error:\n  ValueError: matmul: Input operand 1 has a mismatch\n  in its core dimension 0 (${ac} vs ${br})`;
   }
 }
 
