@@ -549,31 +549,31 @@ function renderStage4() {
 // ============ QUIZ ============
 const quiz = [
   {
-    q: 'Q1: In Stage 1, why did we use the <em>median</em> to fill missing values instead of the <em>mean</em>?',
+    q: 'Q1: In Stage 1, why did we fill missing values with the <em>median</em> instead of the <em>mean (average)</em>?',
     opts: [
-      ['The median is faster to compute', false],
-      ['The median is not affected by extreme outliers (like a 10,000ms latency spike), so it gives a more representative "typical" value', true],
-      ['The mean is always wrong for ML', false],
+      ['The mean adds new rows to the dataset, which changes its size', false],
+      ['Some existing values are very large (e.g. a 9,000ms latency reading). That single large number pulls the mean upward. If we fill all blanks with that inflated average, the filled values are unrealistically high. The median — the middle value of all existing readings — is not pulled by extremes, so it gives a more honest "typical" value.', true],
+      ['The mean cannot be calculated when there are missing values', false],
     ],
-    exp: 'The mean is easily pulled by outliers. A single 10,000ms spike would inflate the mean by hundreds of ms, biasing all filled values. The median just picks the middle value — robust to extremes.'
+    exp: 'Concrete example: existing latency values are [12, 18, 25, 40, 9000]. Mean = (12+18+25+40+9000)÷5 = 1819ms — skewed by the spike. Median = 25ms — the actual middle value, unaffected by the spike. Filling blanks with 1819 would be misleading; filling with 25 is honest.'
   },
   {
-    q: 'Q2: After log transform in Stage 2, the skewness score dropped from ~4.2 to ~0.3. What does this tell you?',
+    q: 'Q2: Stage 2 applied a log transform and the skewness score dropped from ~4.2 to ~0.3. In plain English, what changed?',
     opts: [
-      ['The dataset got 10× smaller', false],
-      ['Bad data was deleted from the dataset', false],
-      ['The distribution is now roughly symmetric — extreme outliers no longer dominate; the model can learn patterns from all data points equally', true],
+      ['Rows with extreme values were deleted from the dataset', false],
+      ['The dataset shrank to 30% of its original size', false],
+      ['The data went from "almost all values crammed at one end with a few huge spikes far away" to "values spread roughly evenly around a centre." The spike still exists — it\'s just been compressed so it no longer dominates the model\'s training.', true],
     ],
-    exp: 'Skewness near 0 means the distribution is balanced around its center. The 10,000ms spike still exists — it\'s just scaled down to ~9.2 instead of 10,000, so it can\'t bully the model.'
+    exp: 'Before: 95% of values are 5–100ms, but one spike at 9,000ms sits far to the right. The chart looks like a long tail. After log: 9,000ms → ln(9001) ≈ 9.1. Normal values (e.g. 20ms) → ln(21) ≈ 3.0. The gap went from 8,980 units down to ~6 units. The chart now looks like a bell curve.'
   },
   {
-    q: 'Q3: In Stage 3 you dropped RAM_MB (r=0.98 with RAM_GB). What would happen if you had kept BOTH?',
+    q: 'Q3: In Stage 3 you dropped RAM_MB because it had r=0.98 with RAM_GB. What would go wrong if you kept both columns?',
     opts: [
-      ['The model would train twice as fast because it has more data', false],
-      ['The model\'s weights for RAM would become unstable and meaningless — one might be hugely positive and the other hugely negative, cancelling each other out', true],
-      ['Nothing — ML models automatically ignore redundant features', false],
+      ['Training would be twice as fast because the model has more information', false],
+      ['Nothing — ML models automatically detect and ignore duplicate columns', false],
+      ['The model sees two columns that always move together. It can\'t tell which one is "responsible" for the prediction, so it might give RAM_GB a weight of +500 and RAM_MB a weight of −499 — they almost cancel out, and both weights are meaningless noise. Dropping one gives the model a clean signal.', true],
     ],
-    exp: 'Multicollinearity causes the optimizer to "fight itself" — both features are equal, so it can assign any combination of weights (e.g. +1M and -1M) that cancel out. This is the "two GPS apps shouting the same directions" problem.'
+    exp: 'Think of it like asking two witnesses who always say exactly the same thing. The court can\'t tell which one is reliable — it just hears noise. One witness (column) is enough. Dropping RAM_MB (less readable: 131,072 vs 128 GB) keeps the same information in a friendlier form.'
   },
 ];
 
