@@ -134,6 +134,60 @@
       </div>
     </div>
 
+    <!-- What is Standardized Mode -->
+    <div style="background:#0d1117;border:1px solid #3fb95055;border-radius:8px;padding:18px;margin-bottom:20px;">
+      <div style="font-size:0.78rem;color:#3fb950;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">✅ What does "Standardized Mode" actually do?</div>
+      <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+        It converts every input to a <strong style="color:#e6edf3">"how far from average, measured in standard deviations"</strong> score.
+        The result is always a small number near zero — regardless of the original unit. The formula is:
+      </p>
+      <div style="background:#161b22;border-radius:6px;padding:12px;font-family:monospace;font-size:0.9rem;text-align:center;margin-bottom:16px;line-height:2;">
+        <span style="color:#3fb950">z</span> = ( <span style="color:#58a6ff">value</span> − <span style="color:#d29922">average</span> ) ÷ <span style="color:#bc8cff">spread</span>
+      </div>
+
+      <!-- Before / After table -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:0.75rem;color:#ff7b72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">⚠️ Before — Raw numbers</div>
+          <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+            <thead><tr>
+              <th style="background:#21262d;padding:6px 10px;color:#8b949e;text-align:left;border:1px solid #30363d;">Dept</th>
+              <th style="background:#1f3a5f;padding:6px 10px;color:#58a6ff;border:1px solid #30363d;">🖥 Servers</th>
+              <th style="background:#3a2a00;padding:6px 10px;color:#d29922;border:1px solid #30363d;">🗄 DB Reads</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Auth</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#58a6ff;">3</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#d29922;">15,000</td></tr>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Billing</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#58a6ff;">8</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#d29922;">120,000</td></tr>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Storage</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#58a6ff;">10</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#d29922;">200,000</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.78rem;color:#ff7b72;margin-top:6px;">Gap between columns: 20,000× — impossible to navigate together</p>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:#3fb950;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">✅ After — Standardized (z-scores)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+            <thead><tr>
+              <th style="background:#21262d;padding:6px 10px;color:#8b949e;text-align:left;border:1px solid #30363d;">Dept</th>
+              <th style="background:#1f3a5f;padding:6px 10px;color:#58a6ff;border:1px solid #30363d;">🖥 z(Servers)</th>
+              <th style="background:#3a2a00;padding:6px 10px;color:#d29922;border:1px solid #30363d;">🗄 z(DB Reads)</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Auth</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">−0.80</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">−0.91</td></tr>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Billing</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">+0.87</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">+0.63</td></tr>
+              <tr><td style="padding:5px 10px;border:1px solid #21262d;color:#8b949e;">Storage</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">+1.54</td><td style="padding:5px 10px;border:1px solid #21262d;font-family:monospace;text-align:center;color:#3fb950;">+1.81</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.78rem;color:#3fb950;margin-top:6px;">Both columns now −1 to +2. Same scale. Model treats them equally.</p>
+        </div>
+      </div>
+
+      <div style="background:#1a3a1a;border:1px solid #2ea04366;border-radius:6px;padding:10px 14px;margin-top:14px;font-size:0.84rem;color:#8b949e;line-height:1.7;">
+        The model doesn't care that 3 servers or 15,000 reads are "real world" numbers.
+        It only sees <strong style="color:#e6edf3">−0.80</strong> and <strong style="color:#e6edf3">−0.91</strong> — two numbers on the same scale.
+        <strong style="color:#3fb950">The prediction formula is the same. Only the inputs changed.</strong>
+      </div>
+    </div>
+
     <!-- Guided steps -->
     <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;">
       <div style="font-size:0.78rem;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Do this in order ↓</div>
