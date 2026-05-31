@@ -561,6 +561,114 @@
       </div>
     </div>
 
+    <!-- HOW W1 GETS DEFINED -->
+    <div style="background:#0d1117;border:1px solid #bc8cff55;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#bc8cff;font-weight:700;margin-bottom:14px;">❓ How does W1 get its values? — The Training Loop</p>
+      <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+        You don't write the numbers in W1 by hand. The model <strong style="color:#e6edf3">starts with random noise and learns the values
+        through thousands of small corrections</strong> — the same gradient descent the ball simulator (Tab 4) shows,
+        just applied to every weight in the matrix at once.
+      </p>
+
+      <!-- Loop steps -->
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#bc8cff;flex-shrink:0;font-size:0.85rem;">1</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Random initialisation</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              W1 is filled with tiny random numbers (e.g. from a normal distribution with mean=0, std=0.01).
+              The prediction at this point is essentially a random guess.
+            </p>
+            <div style="font-family:monospace;font-size:0.82rem;background:#161b22;border-radius:4px;padding:8px;margin-top:6px;color:#8b949e;">
+              W1 = np.random.randn(4, 3) * 0.01
+              <span style="color:#484f58">&nbsp;# [[0.013, -0.007, 0.002], ...]</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#58a6ff;flex-shrink:0;font-size:0.85rem;">2</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Forward pass — make a prediction</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              Multiply input → W1 → W2. Get a prediction score (e.g. 0.51 = "slight lean toward buying").
+              Since W1 is random, this prediction is wrong.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#ff7b72;flex-shrink:0;font-size:0.85rem;">3</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Measure the loss — how wrong was the prediction?</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              Compare prediction vs real answer. A common formula is Mean Squared Error:
+            </p>
+            <div style="font-family:monospace;font-size:0.85rem;background:#161b22;border-radius:4px;padding:10px;margin-top:6px;line-height:1.9;">
+              prediction = <span style="color:#58a6ff">0.51</span> &nbsp;&nbsp;
+              <span style="color:#8b949e"># what the model guessed</span><br>
+              actual &nbsp;&nbsp;&nbsp;= <span style="color:#3fb950">0</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <span style="color:#8b949e"># user didn't buy</span><br>
+              loss &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= (0.51 − 0)² = <span style="color:#ff7b72">0.26</span>
+              <span style="color:#8b949e">&nbsp;# large = very wrong</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#d29922;flex-shrink:0;font-size:0.85rem;">4</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Backpropagation — which weights caused the error?</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              Work backwards through the network (chain rule calculus) to compute the gradient for every single weight.
+              The gradient answers: <em>"if I increase this weight by a tiny amount, does the loss go up or down — and by how much?"</em>
+              A large gradient = this weight contributed a lot to the error.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3fb950;flex-shrink:0;font-size:0.85rem;">5</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Gradient descent — nudge every weight toward less error</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              Subtract a small fraction of the gradient from each weight. Repeat for every weight in W1 and W2:
+            </p>
+            <div style="font-family:monospace;font-size:0.85rem;background:#161b22;border-radius:4px;padding:10px;margin-top:6px;line-height:1.9;">
+              W1 = W1 − <span style="color:#58a6ff">learning_rate</span> × <span style="color:#d29922">gradient_of_W1</span><br>
+              W2 = W2 − <span style="color:#58a6ff">learning_rate</span> × <span style="color:#d29922">gradient_of_W2</span><br>
+              <span style="color:#8b949e"># This is the same formula as the ball simulator:</span><br>
+              <span style="color:#8b949e"># x = x − η × 2(x−3)  ← just one weight</span><br>
+              <span style="color:#8b949e"># W1 does it for all 12 weights simultaneously</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:#21262d;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3fb950;flex-shrink:0;font-size:0.85rem;">↺</div>
+          <div>
+            <strong style="color:#e6edf3;font-size:0.88rem;">Repeat thousands of times</strong>
+            <p style="font-size:0.83rem;color:#8b949e;margin-top:3px;line-height:1.7;">
+              Each pass through one batch of training data is called an <strong style="color:#e6edf3">epoch</strong>.
+              After enough epochs, W1's random noise gradually sculpts into meaningful weights —
+              the salary row might settle to high values (salary matters for buying),
+              and the age row might stay small (age matters less).
+              <strong style="color:#e6edf3">You never wrote those numbers. The data taught the model.</strong>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Connection to gradient descent sim -->
+      <div style="background:#1a3a1a;border:1px solid #2ea043;border-radius:6px;padding:12px;font-size:0.83rem;color:#3fb950;">
+        💡 <strong>The ball simulator (Tab 4) is this exact loop</strong> — but simplified to one weight (x) on a 2D curve.
+        A real network does the same gradient step for every weight in W1 and W2 in parallel. The math is identical; only the number of dimensions changes.
+      </div>
+    </div>
+
     <!-- SUMMARY BOX -->
     <div style="background:#1f3a5f22;border:1px solid #1f6feb;border-radius:8px;padding:14px;font-size:0.85rem;line-height:1.9;">
       <strong style="color:#58a6ff">Recap — why W1 is 4×3:</strong><br>
