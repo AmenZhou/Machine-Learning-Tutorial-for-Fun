@@ -433,66 +433,149 @@
   <!-- ── ML NEURAL NETWORK EXAMPLE ── -->
   <div class="card">
     <h3>Real ML Example: A Neural Network Forward Pass</h3>
-    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">
-      A neural network is just a chain of matrix multiplications.
-      Each layer is one matrix × the output of the previous layer.
+    <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:20px;">
+      Scenario: predict whether a user will <strong style="color:#e6edf3">buy a product (1) or not (0)</strong>,
+      given 4 pieces of information about them: age, salary, number of past purchases, days active.
     </p>
-    <div style="background:#0d1117;border-radius:8px;padding:16px;margin-bottom:16px;">
-      <p style="font-size:0.82rem;color:#8b949e;margin-bottom:12px;">Scenario: predict whether a user will buy (1) or not (0), given 4 features.</p>
-      <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;justify-content:center;">
-        <!-- Input -->
-        <div class="nn-layer">
-          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">INPUT</div>
-          <div class="nn-nodes">
-            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">age</div>
-            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">salary</div>
-            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">buys</div>
-            <div class="nn-node" style="background:#1f3a5f;color:#58a6ff;">days</div>
-          </div>
-          <div class="nn-weight">1 × 4</div>
-        </div>
-        <!-- W1 -->
-        <div class="nn-arrow" style="align-self:center;">
-          <div style="font-size:0.72rem;color:#8b949e;text-align:center;margin-bottom:4px;">× W1</div>
-          →
-          <div class="nn-weight" style="margin-top:4px;">4 × 3</div>
-        </div>
-        <!-- Hidden -->
-        <div class="nn-layer">
-          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">HIDDEN</div>
-          <div class="nn-nodes">
-            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h1</div>
-            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h2</div>
-            <div class="nn-node" style="background:#3a2a00;color:#d29922;">h3</div>
-          </div>
-          <div class="nn-weight">1 × 3</div>
-        </div>
-        <!-- W2 -->
-        <div class="nn-arrow" style="align-self:center;">
-          <div style="font-size:0.72rem;color:#8b949e;text-align:center;margin-bottom:4px;">× W2</div>
-          →
-          <div class="nn-weight" style="margin-top:4px;">3 × 1</div>
-        </div>
-        <!-- Output -->
-        <div class="nn-layer">
-          <div style="font-size:0.72rem;color:#8b949e;margin-bottom:6px;">OUTPUT</div>
-          <div class="nn-nodes">
-            <div class="nn-node" style="background:#1a3a1a;color:#3fb950;">buy?</div>
-          </div>
-          <div class="nn-weight">1 × 1</div>
-        </div>
+
+    <!-- STEP 1: THE SETUP -->
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#d29922;font-weight:700;margin-bottom:10px;">STEP 1 — The input: one user's data</p>
+      <div style="font-family:monospace;font-size:0.88rem;line-height:2.2;">
+        input = <span style="color:#58a6ff">[ 28,  52000,  14,  90 ]</span>
+        &nbsp;&nbsp;<span style="color:#8b949e">← shape: (1 × 4) — 1 user, 4 features</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <span style="color:#58a6ff;font-size:0.78rem;">age&nbsp;&nbsp;&nbsp; salary&nbsp; buys&nbsp; days</span>
       </div>
     </div>
-    <div style="font-family:monospace;font-size:0.88rem;background:#0d1117;border-radius:8px;padding:14px;line-height:2.1;">
-      Step 1: <span style="color:#58a6ff">(1×4)</span> @ <span style="color:#d29922">(4×3)</span> = <span style="color:#3fb950">(1×3)</span> &nbsp;<span style="color:#484f58">✓ inner: 4==4</span><br>
-      Step 2: <span style="color:#58a6ff">(1×3)</span> @ <span style="color:#d29922">(3×1)</span> = <span style="color:#3fb950">(1×1)</span> &nbsp;<span style="color:#484f58">✓ inner: 3==3</span><br><br>
-      <span style="color:#8b949e"># In Python (PyTorch-style):</span><br>
-      hidden = input @ W1 &nbsp;&nbsp;<span style="color:#8b949e"># (1×4) @ (4×3) → (1×3)</span><br>
-      output = hidden @ W2 &nbsp;&nbsp;<span style="color:#8b949e"># (1×3) @ (3×1) → (1×1)</span>
+
+    <!-- STEP 2: WHAT IS W1? -->
+    <div style="background:#0d1117;border:1px solid #1f6feb;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#58a6ff;font-weight:700;margin-bottom:12px;">STEP 2 — W1 (4×3): the connection strengths from inputs to hidden neurons</p>
+      <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+        The network has <strong style="color:#d29922">3 hidden neurons (h1, h2, h3)</strong>. Each of the 4 inputs connects to each of the 3 neurons —
+        that's <strong style="color:#e6edf3">4 × 3 = 12 connections</strong>. W1 stores the strength (weight) of every connection.
+        <br><br>
+        The shape <strong style="color:#58a6ff">4×3</strong> means: <strong style="color:#e6edf3">4 rows</strong> = 4 input features,
+        <strong style="color:#e6edf3">3 columns</strong> = 3 hidden neurons.
+      </p>
+      <div style="overflow-x:auto;">
+        <table style="font-size:0.82rem;border-collapse:collapse;margin-bottom:10px;">
+          <thead>
+            <tr>
+              <th style="background:#21262d;padding:8px 16px;color:#8b949e;border:1px solid #30363d;">W1</th>
+              <th style="background:#3a2a00;padding:8px 16px;color:#d29922;border:1px solid #30363d;text-align:center;">→ neuron h1</th>
+              <th style="background:#3a2a00;padding:8px 16px;color:#d29922;border:1px solid #30363d;text-align:center;">→ neuron h2</th>
+              <th style="background:#3a2a00;padding:8px 16px;color:#d29922;border:1px solid #30363d;text-align:center;">→ neuron h3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;font-weight:700;">age ↓</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.2</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.8</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">-0.1</td>
+            </tr>
+            <tr>
+              <td style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;font-weight:700;">salary ↓</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.5</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">-0.3</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.7</td>
+            </tr>
+            <tr>
+              <td style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;font-weight:700;">purchases ↓</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">-0.4</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.6</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.2</td>
+            </tr>
+            <tr>
+              <td style="background:#1f3a5f;padding:8px 16px;color:#58a6ff;border:1px solid #30363d;font-weight:700;">days ↓</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.9</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">0.1</td>
+              <td style="background:#161b22;padding:8px 16px;color:#e6edf3;border:1px solid #30363d;font-family:monospace;text-align:center;">-0.5</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:0.82rem;color:#8b949e;line-height:1.8;">
+        Each cell is one weight. For example, W1[0][0] = <strong style="color:#e6edf3">0.2</strong> means
+        "age has a weak positive influence on neuron h1."
+        W1[3][0] = <strong style="color:#e6edf3">0.9</strong> means "days active has a strong positive influence on h1."
+        <br>
+        <strong style="color:#d29922">These values are not hand-crafted</strong> — the model learns them during training by adjusting
+        them to reduce prediction error (gradient descent, Week 1 Tab 4).
+      </p>
     </div>
+
+    <!-- STEP 3: COMPUTE h1 -->
+    <div style="background:#0d1117;border:1px solid #2ea043;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#3fb950;font-weight:700;margin-bottom:12px;">STEP 3 — Compute hidden neuron h1 (one dot product)</p>
+      <p style="font-size:0.85rem;color:#8b949e;margin-bottom:12px;">
+        h1 = (every input) × (W1's column 0) — one value from each input, weighted by that column, then summed:
+      </p>
+      <div style="font-family:monospace;font-size:0.9rem;background:#0d1117;border-radius:6px;padding:14px;line-height:2.3;">
+        h1 = <span style="color:#58a6ff">28</span>×<span style="color:#d29922">0.2</span>
+           + <span style="color:#58a6ff">52000</span>×<span style="color:#d29922">0.5</span>
+           + <span style="color:#58a6ff">14</span>×<span style="color:#d29922">(-0.4)</span>
+           + <span style="color:#58a6ff">90</span>×<span style="color:#d29922">0.9</span><br>
+           = <span style="color:#e6edf3">5.6</span> + <span style="color:#e6edf3">26000</span> + <span style="color:#e6edf3">(-5.6)</span> + <span style="color:#e6edf3">81</span><br>
+           = <span style="color:#3fb950;font-size:1.05rem;font-weight:800;">26081</span>
+           &nbsp;<span style="color:#8b949e;font-size:0.8rem;">(this is why we need feature scaling — salary dominates!)</span>
+      </div>
+      <p style="font-size:0.82rem;color:#8b949e;margin-top:10px;line-height:1.7;">
+        The same process repeats for h2 and h3 (using columns 1 and 2 of W1).
+        After all 3 neurons are computed, you have <strong style="color:#d29922">hidden = [h1, h2, h3]</strong> — shape (1×3).
+      </p>
+    </div>
+
+    <!-- STEP 4: W2 and output -->
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#bc8cff;font-weight:700;margin-bottom:12px;">STEP 4 — W2 (3×1): compress 3 hidden values down to 1 prediction</p>
+      <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:12px;">
+        W2 is another weights matrix. This time <strong style="color:#e6edf3">3 rows</strong> = 3 hidden neurons,
+        <strong style="color:#e6edf3">1 column</strong> = 1 output (the buy/no-buy score).
+      </p>
+      <div style="font-family:monospace;font-size:0.88rem;line-height:2.2;">
+        hidden <span style="color:#d29922">(1×3)</span> @ W2 <span style="color:#bc8cff">(3×1)</span>
+        = output <span style="color:#3fb950">(1×1)</span>
+        &nbsp;<span style="color:#484f58">✓ inner 3==3</span><br>
+        output → pass through sigmoid → probability of buying (0.0 to 1.0)
+      </div>
+    </div>
+
+    <!-- FULL PICTURE -->
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px;margin-bottom:16px;">
+      <p style="font-size:0.82rem;color:#8b949e;font-weight:700;margin-bottom:12px;">The full chain — shapes at every step:</p>
+      <div style="font-family:monospace;font-size:0.88rem;line-height:2.4;">
+        input &nbsp;<span style="color:#58a6ff">(1×4)</span>
+        &nbsp;@&nbsp; W1 <span style="color:#d29922">(4×3)</span>
+        &nbsp;=&nbsp; hidden <span style="color:#3fb950">(1×3)</span>
+        &nbsp;&nbsp;<span style="color:#484f58">← 4==4 ✓</span><br>
+        hidden <span style="color:#58a6ff">(1×3)</span>
+        &nbsp;@&nbsp; W2 <span style="color:#d29922">(3×1)</span>
+        &nbsp;=&nbsp; output <span style="color:#3fb950">(1×1)</span>
+        &nbsp;&nbsp;<span style="color:#484f58">← 3==3 ✓</span><br><br>
+        <span style="color:#8b949e"># Python (NumPy):</span><br>
+        hidden = input @ W1 &nbsp;&nbsp;<span style="color:#8b949e"># (1×4)@(4×3) → (1×3)</span><br>
+        output = hidden @ W2 &nbsp;&nbsp;<span style="color:#8b949e"># (1×3)@(3×1) → (1×1)</span>
+      </div>
+    </div>
+
+    <!-- SUMMARY BOX -->
+    <div style="background:#1f3a5f22;border:1px solid #1f6feb;border-radius:8px;padding:14px;font-size:0.85rem;line-height:1.9;">
+      <strong style="color:#58a6ff">Recap — why W1 is 4×3:</strong><br>
+      <span style="color:#8b949e">
+        • The <strong style="color:#e6edf3">4</strong> comes from your data — you have 4 input features.<br>
+        • The <strong style="color:#e6edf3">3</strong> is a design choice — you decided to have 3 hidden neurons (you could choose 8, 64, 256...).<br>
+        • W1 has one row per input and one column per neuron — so every input connects to every neuron.<br>
+        • The model <strong style="color:#e6edf3">learns</strong> the numbers inside W1 during training. You only choose the shape.
+      </span>
+    </div>
+
     <div style="margin-top:14px;background:#da363322;border:1px solid #f85149;border-radius:8px;padding:12px;font-size:0.85rem;color:#ff7b72;">
-      ⚠️ <strong>Most common ML bug:</strong> Getting a shape mismatch. e.g. W1 is accidentally (4×4) instead of (4×3) — Python throws
-      <code>RuntimeError: mat1 and mat2 shapes cannot be multiplied</code>. The dimension checker above helps you catch this before writing any training code.
+      ⚠️ <strong>Most common ML bug:</strong> Shape mismatch. If W1 is accidentally (4×4) instead of (4×3),
+      Python throws <code>RuntimeError: mat1 and mat2 shapes cannot be multiplied (1×4 and 4×4 vs 4×3)</code>.
+      The dimension checker above helps you spot this before writing training code.
     </div>
   </div>
 </div>
