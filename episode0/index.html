@@ -150,7 +150,68 @@
   .deep-dive-card .label { font-size:0.72rem; color:var(--c); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
   .deep-dive-card .title { font-size:0.88rem; font-weight:700; }
 
-  @media(max-width:600px){ .predict-form{grid-template-columns:1fr;} .scale-grid{grid-template-columns:1fr;} .acc-grid{grid-template-columns:1fr;} main{padding:16px;} header{padding:16px 20px;} }
+  @media(max-width:640px){
+    /* Pipeline nav: hide text labels, show only numbered circles */
+    .pip-lbl { display:none; }
+    .pipeline { min-width:unset; gap:0; }
+    .pip-step { padding:9px 7px; }
+    .pip-arrow { padding:0 1px; font-size:0.9rem; color:#21262d; }
+    .pipeline-nav { padding:10px 14px; }
+
+    /* Header */
+    header { padding:14px 16px; gap:10px; flex-wrap:wrap; }
+    header h1 { font-size:1.15rem; }
+
+    /* Main */
+    main { padding:16px 12px; }
+
+    /* Canvases: fill container width */
+    canvas { width:100% !important; }
+
+    /* Code / result boxes scroll horizontally */
+    .result-box { overflow-x:auto; font-size:0.78rem; line-height:1.8; }
+    .full-code   { overflow-x:auto; font-size:0.78rem; line-height:2; }
+    .epoch-panel { overflow-x:auto; font-size:0.76rem; }
+
+    /* Grids → single column */
+    .predict-form { grid-template-columns:1fr; }
+    .scale-grid   { grid-template-columns:1fr; }
+    .acc-grid     { grid-template-columns:1fr; }
+
+    /* Stat row: smaller pills */
+    .stat { min-width:72px; padding:8px 10px; }
+    .stat span { font-size:1.1rem; }
+
+    /* Hook */
+    .hook h2 { font-size:1.2rem; }
+    .hook p   { font-size:0.85rem; }
+
+    /* Step header */
+    .step-title { font-size:1rem; }
+    .step-sub   { font-size:0.78rem; }
+
+    /* Tables */
+    table { font-size:0.75rem; }
+    th, td { padding:6px 8px; }
+
+    /* Hyperparameter table */
+    .hyper-tbl { font-size:0.75rem; }
+    .hyper-tbl th, .hyper-tbl td { padding:6px 8px; }
+
+    /* Why buttons: wrap */
+    .why-btn { font-size:0.78rem; padding:6px 10px; }
+
+    /* Deep-dive grid */
+    .deep-dive-grid { grid-template-columns:1fr 1fr; }
+
+    /* Scrubber label */
+    .scrubber-wrap label { font-size:0.76rem; }
+  }
+
+  @media(max-width:400px){
+    .deep-dive-grid { grid-template-columns:1fr; }
+    .pip-num { width:20px; height:20px; font-size:0.65rem; }
+  }
 </style>
 </head>
 <body>
@@ -168,31 +229,31 @@
 <div class="pipeline-nav">
   <div class="pipeline">
     <div class="pip-step active" style="--c:#58a6ff" id="pip0" onclick="goStep(0)">
-      <div class="pip-num">1</div> 📊 Data
+      <div class="pip-num">1</div><span class="pip-lbl"> 📊 Data</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#d29922" id="pip1" onclick="goStep(1)">
-      <div class="pip-num">2</div> ✂️ Split
+      <div class="pip-num">2</div><span class="pip-lbl"> ✂️ Split</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#ff9944" id="pip2" onclick="goStep(2)">
-      <div class="pip-num">3</div> ⚖️ Scale
+      <div class="pip-num">3</div><span class="pip-lbl"> ⚖️ Scale</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#bc8cff" id="pip3" onclick="goStep(3)">
-      <div class="pip-num">4</div> 🧠 Train
+      <div class="pip-num">4</div><span class="pip-lbl"> 🧠 Train</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#f7c94b" id="pip4" onclick="goStep(4)">
-      <div class="pip-num">5</div> ⚗️ Compare
+      <div class="pip-num">5</div><span class="pip-lbl"> ⚗️ Compare</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#3fb950" id="pip5" onclick="goStep(5)">
-      <div class="pip-num">6</div> 🎯 Predict
+      <div class="pip-num">6</div><span class="pip-lbl"> 🎯 Predict</span>
     </div>
     <div class="pip-arrow">→</div>
     <div class="pip-step" style="--c:#e6edf3" id="pip6" onclick="goStep(6)">
-      <div class="pip-num">★</div> 🏁 Code
+      <div class="pip-num">★</div><span class="pip-lbl"> 🏁 Code</span>
     </div>
   </div>
 </div>

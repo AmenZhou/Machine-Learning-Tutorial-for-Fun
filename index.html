@@ -125,6 +125,21 @@
     font-size: 0.85rem;
     border-top: 1px solid #21262d;
   }
+
+  @media(max-width:680px){
+    header { padding: 22px 18px; }
+    header h1 { font-size: 2rem; }
+    header p { font-size: 0.9rem; }
+    main { padding: 24px 14px; }
+    .cards { gap: 14px; }
+    .card { padding: 18px; }
+    .phase-label { margin-bottom: 14px; }
+    .ep0-banner { padding: 22px 18px !important; }
+  }
+  @media(max-width:500px){
+    header h1 { font-size: 1.6rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -138,7 +153,7 @@
 <main>
 
   <!-- EPISODE 0: START HERE -->
-  <div style="background:linear-gradient(135deg,#1f2937 0%,#111827 100%);border:2px solid #58a6ff44;border-radius:16px;padding:36px 40px;margin-bottom:48px;position:relative;overflow:hidden;">
+  <div class="ep0-banner" style="background:linear-gradient(135deg,#1f2937 0%,#111827 100%);border:2px solid #58a6ff44;border-radius:16px;padding:36px 40px;margin-bottom:48px;position:relative;overflow:hidden;">
     <div style="position:absolute;top:0;right:0;width:300px;height:100%;background:radial-gradient(ellipse at top right,#58a6ff11 0%,transparent 70%);pointer-events:none;"></div>
     <div style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap;">
       <div style="font-size:3rem;line-height:1;">🚀</div>
