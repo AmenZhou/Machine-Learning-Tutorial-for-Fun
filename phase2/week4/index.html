@@ -3,33 +3,892 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phase 2 Week 4 — Scikit-Learn Capstone</title>
+<title>Phase 2 Week 4 — Stop the Model From Cheating</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .coming { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:48px; text-align:center; max-width:520px; }
-  h1 { font-size:2rem; margin-bottom:12px; }
-  p { color:#8b949e; line-height:1.8; margin-bottom:20px; }
-  a { color:#3fb950; text-decoration:none; }
-  .tag { display:inline-block; background:#21262d; border-radius:4px; padding:3px 10px; font-size:0.78rem; color:#8b949e; margin:4px; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; }
+  header { background:#161b22; border-bottom:1px solid #30363d; padding:16px 40px; display:flex; align-items:center; gap:16px; }
+  header a { color:#3fb950; text-decoration:none; font-size:0.9rem; }
+  header h1 { font-size:1.4rem; }
+  .badge { background:#0a1a0a; color:#3fb950; padding:3px 10px; border-radius:12px; font-size:0.75rem; border:1px solid #3fb95044; }
+  .tabs { display:flex; gap:4px; padding:0 40px; background:#161b22; border-bottom:1px solid #30363d; }
+  .tab { padding:14px 22px; cursor:pointer; font-size:0.9rem; border-bottom:3px solid transparent; color:#8b949e; transition:all 0.2s; }
+  .tab:hover { color:#e6edf3; }
+  .tab.active { color:#3fb950; border-bottom-color:#3fb950; }
+  .panel { display:none; padding:36px 40px; max-width:960px; margin:0 auto; }
+  .panel.active { display:block; }
+  h2 { font-size:1.4rem; margin-bottom:8px; }
+  .hook { background:#0a1a0a; border:1px solid #3fb95055; border-radius:10px; padding:16px 20px; margin-bottom:24px; }
+  .hook-label { font-size:0.75rem; color:#3fb950; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .hook p { font-size:0.95rem; color:#e6edf3; line-height:1.7; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:24px; margin-bottom:20px; }
+  .card h3 { font-size:1rem; margin-bottom:14px; color:#3fb950; }
+  canvas { border-radius:8px; display:block; }
+  button { padding:10px 22px; border-radius:8px; cursor:pointer; font-size:0.88rem; font-weight:700; border:1px solid #1a6030; background:#0a4020; color:#fff; transition:background 0.2s; margin:4px; }
+  button:hover { background:#1a6030; }
+  button.green { background:#238636; border-color:#2ea043; }
+  button.green:hover { background:#2ea043; }
+  button.secondary { background:#21262d; border-color:#30363d; color:#e6edf3; }
+  button.secondary:hover { background:#30363d; }
+  .stat-row { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .stat { background:#21262d; border-radius:6px; padding:10px 16px; font-size:0.85rem; }
+  .stat span { font-size:1.2rem; font-weight:800; font-family:monospace; display:block; }
+  .result-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:14px 16px; font-family:monospace; font-size:0.86rem; line-height:1.9; margin-top:14px; }
+  .green { color:#3fb950; } .red { color:#ff7b72; } .yellow { color:#d29922; } .orange { color:#ff9944; } .blue { color:#58a6ff; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .info-box { border-radius:8px; padding:14px 16px; font-size:0.85rem; line-height:1.8; margin:14px 0; }
+  .info-blue { background:#1f3a5f22; border:1px solid #1f6feb; color:#8b949e; }
+  .info-green { background:#1a3a1a; border:1px solid #2ea043; color:#8b949e; }
+  .info-orange { background:#2a1a00; border:1px solid #ff994455; color:#8b949e; }
+  .quiz-q { background:#1f3a5f22; border:1px solid #1f6feb; border-radius:8px; padding:16px; margin:14px 0; }
+  .opt { display:block; width:100%; text-align:left; margin:6px 0; padding:10px 14px; background:#21262d; border:1px solid #30363d; border-radius:6px; cursor:pointer; color:#e6edf3; transition:all 0.2s; }
+  .opt:hover { border-color:#3fb950; color:#3fb950; }
+  .opt.correct { background:#1a7f37; border-color:#2ea043; color:#3fb950; }
+  .opt.wrong { background:#da363322; border-color:#f85149; color:#ff7b72; }
+  .celebrate { background:#1a7f3722; border:1px solid #2ea043; border-radius:8px; padding:16px; margin-top:14px; display:none; color:#3fb950; font-size:0.9rem; }
+  .slider-row { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:14px 0; }
+  .alpha-label { font-size:0.85rem; color:#8b949e; min-width:140px; }
+  input[type=range] { cursor:pointer; }
+  @media(max-width:640px){
+    .two-col { grid-template-columns:1fr; }
+    .panel { padding: 16px 12px; }
+    header { padding: 12px 16px; }
+    header h1 { font-size: 1.2rem; }
+    .tabs { padding: 0; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
+    .tab { padding: 12px 14px; font-size: 0.82rem; flex-shrink: 0; }
+    canvas { width: 100% !important; }
+    button { padding: 8px 14px; font-size: 0.82rem; }
+  }
 </style>
 </head>
 <body>
-<div class="coming">
-  <div style="font-size:3rem;margin-bottom:16px;">⚗️</div>
-  <h1>Scikit-Learn Capstone</h1>
-  <p>Coming soon. You'll use the industry-standard sklearn library to train, compare, and deploy real models — and discover that everything from Phase 1 & 2 is what sklearn does internally.</p>
-  <div>
-    <span class="tag">Scikit-Learn</span>
-    <span class="tag">sklearn Pipeline</span>
-    <span class="tag">Model Comparison</span>
-    <span class="tag">fit / predict / score</span>
-    <span class="tag">StandardScaler</span>
-  </div>
-  <br>
+
+<header>
   <a href="../../index.html">← Back to Arena</a>
-  &nbsp;·&nbsp;
-  <a href="../week3/index.html">← Week 3: Classifier</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Phase 2 · Week 4</div>
+    <h1>🛑 Stop the Model From Cheating</h1>
+  </div>
+  <span class="badge">L1 · L2 · Regularisation</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('what')">📖 What is it?</div>
+  <div class="tab" onclick="switchTab('overfit')">😬 Watch It Overfit</div>
+  <div class="tab" onclick="switchTab('ridge')">🔵 Ridge (L2) Dial</div>
+  <div class="tab" onclick="switchTab('lasso')">🟡 Lasso (L1) Dial</div>
+  <div class="tab" onclick="switchTab('quiz')">🎓 Quiz</div>
 </div>
+
+<!-- ===== TAB 1: WHAT IS IT ===== -->
+<div id="panel-what" class="panel active">
+  <h2>🛑 What is Regularisation?</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 In plain English</div>
+    <p>Your model has 10 features. It uses <em>all</em> of them — including 5 noise features that have nothing to do with the bill.
+    It memorises noise and fails on new data. Regularisation adds a <strong>penalty fine for complexity</strong> so the model stops cheating.</p>
+  </div>
+
+  <div class="card">
+    <h3>The Problem: Every Feature Gets a Coefficient</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:12px;">
+      Without regularisation, the model assigns a coefficient to every feature — even the noise ones.
+      It fits training data nearly perfectly (R² ≈ 0.99) by memorising the random noise patterns.
+      On test data it has never seen, predictions collapse.
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;font-family:monospace;font-size:0.88rem;line-height:2.1;">
+      <span style="color:#8b949e"># What the model learns (bad — noise features get big weights):</span><br>
+      bill = <span style="color:#58a6ff">w1</span>×servers + <span style="color:#58a6ff">w2</span>×db_reads + ... + <span style="color:#ff7b72">w6</span>×noise_1 + <span style="color:#ff7b72">w7</span>×noise_2 + ...<br><br>
+      <span style="color:#8b949e"># Those noise weights are large — the model "memorised" them</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Fix: Add a Penalty for Large Coefficients</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:12px;">
+      Think of it as a <strong style="color:#e6edf3">complexity tax</strong>. The model still tries to minimise MSE — but now it also pays a fine for large coefficients.
+      Noise features can't justify their large weights because they don't reduce MSE enough to cover the fine. So they shrink.
+    </p>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;font-family:monospace;font-size:0.88rem;line-height:2.1;">
+      <span style="color:#8b949e"># Without regularisation: just minimise MSE</span><br>
+      Loss = MSE<br><br>
+      <span style="color:#8b949e"># With regularisation: minimise MSE + penalty for big weights</span><br>
+      Loss = MSE + <span style="color:#3fb950">α</span> × (size of all coefficients)<br><br>
+      <span style="color:#8b949e"># α controls how heavy the fine is — you dial it</span>
+    </div>
+    <div class="info-box info-green" style="margin-top:12px;">
+      <strong style="color:#3fb950">Key insight:</strong> <em>α = 0</em> → no penalty (same as standard linear regression).
+      <em>Large α</em> → heavy fine → all coefficients driven toward zero. The trick is finding the sweet spot.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Two Types of Regularisation</h3>
+    <div class="two-col">
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #1f6feb33;">
+        <div style="font-size:0.75rem;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">L2 — Ridge Regression</div>
+        <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:10px;">
+          Penalty = α × Σ w² (sum of squared coefficients).
+        </p>
+        <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:10px;">
+          <strong style="color:#e6edf3">Shrinks everything toward zero proportionally.</strong>
+          Never forces a coefficient to exactly zero — it just makes them all smaller.
+        </p>
+        <p style="font-size:0.85rem;color:#3fb950;">Best when: all features matter a little.</p>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #d2922233;">
+        <div style="font-size:0.75rem;color:#d29922;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">L1 — Lasso Regression</div>
+        <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:10px;">
+          Penalty = α × Σ |w| (sum of absolute coefficients).
+        </p>
+        <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;margin-bottom:10px;">
+          <strong style="color:#e6edf3">Forces irrelevant feature coefficients to exactly zero.</strong>
+          Automatic feature selection — noise features simply disappear from the model.
+        </p>
+        <p style="font-size:0.85rem;color:#3fb950;">Best when: you suspect many features are irrelevant.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box info-blue">
+    <strong style="color:#58a6ff">Connection to Week 2:</strong> In Week 2, overfitting came from using a polynomial degree that was too high — the model bent its curve to fit every training point.
+    Here, overfitting comes from too many features (10 features for 14 training examples). The root cause is the same: <em>too much model complexity for the amount of data</em>.
+    Regularisation is the fix in both cases — it adds a constraint that prevents the model from going wild.
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>Real-World Example</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:10px;">
+      A cloud cost model has 20 features. Engineers aren't sure which ones actually drive the bill.
+      They apply Lasso — it automatically drops 15 irrelevant features and keeps only the 5 that matter.
+      The model is now simpler, interpretable, and generalises better to new data.
+    </p>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="green" onclick="switchTab('overfit')">▶ Watch It Overfit →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: WATCH IT OVERFIT ===== -->
+<div id="panel-overfit" class="panel">
+  <h2>😬 Watch It Overfit</h2>
+
+  <div class="hook">
+    <div class="hook-label">🎯 What you will see</div>
+    <p>Train a model on all 10 features (5 real + 5 noise). Watch it score near-perfect on training data — and much worse on test. The noise features get large coefficients: the model is cheating.</p>
+  </div>
+
+  <div class="card">
+    <button class="green" onclick="trainUnregularised()" id="btn-overfit">▶ Train Unregularised Model</button>
+    <div id="overfit-canvas-wrap" style="margin-top:16px;display:none;">
+      <canvas id="overfit-canvas" width="860" height="320"></canvas>
+      <div class="stat-row" id="overfit-stats"></div>
+      <div class="result-box" id="overfit-msg" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python Code — Unregularised Model</h3>
+    <div class="info-box info-orange" style="margin-bottom:12px;">
+      Run this to see how an unregularised model with 10 features behaves — high train R², low test R², and noise features with non-zero coefficients.
+    </div>
+    <pre id="code-overfit" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-overfit','btn-copy-overfit')" title="Click to copy"></pre>
+    <button id="btn-copy-overfit" class="secondary" onclick="copyCode('code-overfit','btn-copy-overfit')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 3: RIDGE DIAL ===== -->
+<div id="panel-ridge" class="panel">
+  <h2>🔵 Ridge (L2) Dial</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 What you will see</div>
+    <p>Ridge shrinks <em>all</em> coefficients toward zero as α increases. Noise features shrink faster because they have less genuine support in the data.
+    Drag the slider and watch the bars change in real time.</p>
+  </div>
+
+  <div class="card">
+    <div class="slider-row">
+      <div class="alpha-label">Penalty α: <strong id="ridge-alpha-display" style="color:#58a6ff;">0</strong></div>
+      <input type="range" id="ridge-alpha-slider" min="0" max="6" step="1" value="0"
+             oninput="updateRidge()" style="width:260px;accent-color:#58a6ff;">
+      <span style="font-size:0.8rem;color:#8b949e;">0 → 1 → 5 → 10 → 50 → 100 → 500</span>
+    </div>
+    <canvas id="ridge-canvas" width="860" height="320"></canvas>
+    <div class="stat-row" id="ridge-stats"></div>
+    <div class="result-box" id="ridge-msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python Code — Ridge (L2)</h3>
+    <div class="info-box info-blue" style="margin-bottom:12px;">
+      Uses sklearn's StandardScaler + Ridge pipeline — same math the slider runs above.
+    </div>
+    <pre id="code-ridge" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-ridge','btn-copy-ridge')" title="Click to copy"></pre>
+    <button id="btn-copy-ridge" class="secondary" onclick="copyCode('code-ridge','btn-copy-ridge')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 4: LASSO DIAL ===== -->
+<div id="panel-lasso" class="panel">
+  <h2>🟡 Lasso (L1) Dial</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 What you will see</div>
+    <p>Lasso takes it further — it drives irrelevant coefficients to <em>exactly zero</em>.
+    As α increases, the 5 noise features disappear first. At the right α, you're left with only the 5 real features. Hollow bars = zeroed-out features.</p>
+  </div>
+
+  <div class="card">
+    <div class="slider-row">
+      <div class="alpha-label">Penalty α: <strong id="lasso-alpha-display" style="color:#d29922;">0</strong></div>
+      <input type="range" id="lasso-alpha-slider" min="0" max="6" step="1" value="0"
+             oninput="updateLasso()" style="width:260px;accent-color:#d29922;">
+      <span style="font-size:0.8rem;color:#8b949e;">0 → 1 → 5 → 10 → 50 → 100 → 500</span>
+    </div>
+    <canvas id="lasso-canvas" width="860" height="320"></canvas>
+    <div class="stat-row" id="lasso-stats"></div>
+    <div class="result-box" id="lasso-msg"></div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python Code — Lasso (L1)</h3>
+    <div class="info-box info-orange" style="margin-bottom:12px;">
+      Coordinate descent implementation — same algorithm the slider runs. Watch how <code style="color:#d29922;">n_zero</code> climbs as α increases.
+    </div>
+    <pre id="code-lasso" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-lasso','btn-copy-lasso')" title="Click to copy"></pre>
+    <button id="btn-copy-lasso" class="secondary" onclick="copyCode('code-lasso','btn-copy-lasso')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 5: QUIZ ===== -->
+<div id="panel-quiz" class="panel">
+  <h2>🎓 Quick Check</h2>
+  <div class="hook">
+    <div class="hook-label">3 questions</div>
+    <p>Answer these to confirm the Week 4 concepts are solid before moving on.</p>
+  </div>
+  <div id="quiz-body"></div>
+  <div id="quiz-result" style="display:none;"></div>
+</div>
+
+<script>
+// ===================================================================
+// DATA
+// ===================================================================
+function seededRand() {
+  var s = 42;
+  return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+var rng = seededRand();
+
+var FEATURES_ALL = ['servers','db_reads','storage_tb','api_calls','deploys',
+                    'noise_1','noise_2','noise_3','noise_4','noise_5'];
+var FEATURES_REAL = FEATURES_ALL.slice(0, 5);
+var FEATURES_NOISE = FEATURES_ALL.slice(5);
+
+var X_REAL = [
+  [3,2,5,10,4],[3,3,5,12,5],[4,3,6,13,4],[4,4,6,15,6],
+  [5,4,7,16,5],[5,5,7,18,7],[6,5,8,20,6],[6,6,8,22,8],
+  [7,6,9,24,7],[7,7,9,26,9],[8,7,10,28,8],[8,8,10,30,10],
+  [9,8,11,32,9],[9,9,11,34,11],[10,9,12,36,10],[10,10,12,38,12],
+  [11,10,13,40,11],[11,11,13,42,13],[12,11,14,44,12],[12,12,14,46,14]
+];
+
+var BILLS = [2180,2530,2690,3150,3320,3780,4020,4350,4680,5020,
+             5310,5650,5980,6300,6620,6950,7280,7620,7870,8250];
+
+// Build X_ALL with 5 noise columns appended
+var X_ALL = X_REAL.map(function(row) {
+  var noise = [rng()*10, rng()*10, rng()*10, rng()*10, rng()*10];
+  return row.concat(noise);
+});
+
+var N_TOTAL = X_ALL.length;  // 20
+var TRAIN_IDX = [0,1,2,3,4,5,6,7,8,9,10,11,12,13];   // months 1-14
+var TEST_IDX  = [14,15,16,17,18,19];                   // months 15-20
+
+var X_TRAIN = TRAIN_IDX.map(function(i){ return X_ALL[i]; });
+var X_TEST  = TEST_IDX.map(function(i){ return X_ALL[i]; });
+var Y_TRAIN = TRAIN_IDX.map(function(i){ return BILLS[i]; });
+var Y_TEST  = TEST_IDX.map(function(i){ return BILLS[i]; });
+
+// ===================================================================
+// MATH HELPERS
+// ===================================================================
+function standardise(Xmat) {
+  var n = Xmat.length, p = Xmat[0].length;
+  var means = [];
+  for (var j = 0; j < p; j++) {
+    var s = 0;
+    for (var i = 0; i < n; i++) s += Xmat[i][j];
+    means.push(s / n);
+  }
+  var stds = [];
+  for (var j = 0; j < p; j++) {
+    var m = means[j], sq = 0;
+    for (var i = 0; i < n; i++) sq += Math.pow(Xmat[i][j] - m, 2);
+    stds.push(Math.sqrt(sq / n) || 1);
+  }
+  var Xs = Xmat.map(function(row) {
+    return row.map(function(v, j) { return (v - means[j]) / stds[j]; });
+  });
+  return { Xs: Xs, means: means, stds: stds };
+}
+
+function gaussianElim(A, b) {
+  var n = b.length;
+  var M = A.map(function(row, i) { return row.slice().concat([b[i]]); });
+  for (var col = 0; col < n; col++) {
+    var maxRow = col;
+    for (var r = col + 1; r < n; r++) {
+      if (Math.abs(M[r][col]) > Math.abs(M[maxRow][col])) maxRow = r;
+    }
+    var tmp = M[col]; M[col] = M[maxRow]; M[maxRow] = tmp;
+    if (Math.abs(M[col][col]) < 1e-10) return new Array(n).fill(0);
+    for (var r = 0; r < n; r++) {
+      if (r === col) continue;
+      var f = M[r][col] / M[col][col];
+      for (var k = col; k <= n; k++) M[r][k] -= f * M[col][k];
+    }
+  }
+  return M.map(function(row, i) { return row[n] / row[i]; });
+}
+
+function ridgeFit(Xs, y, alpha) {
+  var n = Xs.length, p = Xs[0].length;
+  var XtX = [];
+  for (var i = 0; i < p; i++) {
+    var row = [];
+    for (var j = 0; j < p; j++) {
+      var s = 0;
+      for (var k = 0; k < n; k++) s += Xs[k][i] * Xs[k][j];
+      row.push(s + (i === j ? alpha : 0));
+    }
+    XtX.push(row);
+  }
+  var Xty = [];
+  for (var i = 0; i < p; i++) {
+    var s = 0;
+    for (var k = 0; k < n; k++) s += Xs[k][i] * y[k];
+    Xty.push(s);
+  }
+  return gaussianElim(XtX, Xty);
+}
+
+function softThresh(z, alpha) {
+  if (z > alpha) return z - alpha;
+  if (z < -alpha) return z + alpha;
+  return 0;
+}
+
+function lassoFit(Xs, y, alpha, maxIter) {
+  maxIter = maxIter || 300;
+  var n = Xs.length, p = Xs[0].length;
+  var beta = new Array(p).fill(0);
+  for (var iter = 0; iter < maxIter; iter++) {
+    for (var j = 0; j < p; j++) {
+      var r = [];
+      for (var i = 0; i < n; i++) {
+        var res = y[i];
+        for (var kk = 0; kk < p; kk++) {
+          if (kk !== j) res -= Xs[i][kk] * beta[kk];
+        }
+        r.push(res);
+      }
+      var corr = 0;
+      for (var i = 0; i < n; i++) corr += Xs[i][j] * r[i];
+      corr /= n;
+      var xSqNorm = 0;
+      for (var i = 0; i < n; i++) xSqNorm += Math.pow(Xs[i][j], 2);
+      xSqNorm /= n;
+      beta[j] = xSqNorm < 1e-10 ? 0 : softThresh(corr / xSqNorm, alpha / xSqNorm);
+    }
+  }
+  return beta;
+}
+
+function computeR2(yTrue, yPred) {
+  var n = yTrue.length;
+  var mean = 0;
+  for (var i = 0; i < n; i++) mean += yTrue[i];
+  mean /= n;
+  var ssTot = 0, ssRes = 0;
+  for (var i = 0; i < n; i++) {
+    ssTot += Math.pow(yTrue[i] - mean, 2);
+    ssRes += Math.pow(yTrue[i] - yPred[i], 2);
+  }
+  return ssTot < 1e-10 ? 1 : 1 - ssRes / ssTot;
+}
+
+function predictFromBeta(Xs_info, beta, X_raw, meanY) {
+  // y_pred[i] = meanY + sum_j beta[j] * (X_raw[i][j] - means[j]) / stds[j]
+  return X_raw.map(function(row) {
+    var s = meanY;
+    for (var j = 0; j < beta.length; j++) {
+      s += beta[j] * (row[j] - Xs_info.means[j]) / Xs_info.stds[j];
+    }
+    return s;
+  });
+}
+
+var ALPHA_STEPS = [0, 1, 5, 10, 50, 100, 500];
+
+// ===================================================================
+// TAB SWITCHING
+// ===================================================================
+var TAB_NAMES = ['what','overfit','ridge','lasso','quiz'];
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  var idx = TAB_NAMES.indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'ridge') { setTimeout(function(){ updateRidge(); }, 80); }
+  if (name === 'lasso') { setTimeout(function(){ updateLasso(); }, 80); }
+  if (name === 'quiz')  { renderQuiz(); }
+}
+
+// ===================================================================
+// CANVAS COEFFICIENT BAR CHART
+// ===================================================================
+function drawCoeffChart(canvasId, beta, maxVal, label) {
+  var canvas = document.getElementById(canvasId);
+  var W = canvas.offsetWidth || 860;
+  canvas.width = W;
+  canvas.height = 320;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, canvas.height);
+
+  var p = beta.length;
+  var padL = 96, padR = 30, padT = 28, padB = 30;
+  var chartW = W - padL - padR;
+  var chartH = canvas.height - padT - padB;
+  var rowH = chartH / p;
+  var barH = Math.max(8, rowH * 0.55);
+
+  // axis
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + chartH);
+  ctx.lineTo(padL + chartW, padT + chartH);
+  ctx.stroke();
+
+  // x-axis labels
+  var ticks = 5;
+  ctx.fillStyle = '#484f58'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  for (var t = 0; t <= ticks; t++) {
+    var xp = padL + (chartW * t / ticks);
+    var val = (maxVal * t / ticks).toFixed(2);
+    ctx.fillText(val, xp, padT + chartH + 16);
+    ctx.strokeStyle = '#21262d'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(xp, padT); ctx.lineTo(xp, padT + chartH); ctx.stroke();
+  }
+
+  // x axis label
+  ctx.fillStyle = '#8b949e'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Normalised |coefficient|', padL + chartW / 2, canvas.height - 4);
+
+  // draw each bar
+  for (var j = 0; j < p; j++) {
+    var cy = padT + j * rowH + rowH / 2;
+    var barW = maxVal > 1e-12 ? Math.abs(beta[j]) / maxVal * chartW : 0;
+    var isNoise = j >= 5;
+    var isZero = Math.abs(beta[j]) < 1e-8;
+
+    // feature label
+    ctx.fillStyle = isNoise ? '#8b949e' : '#e6edf3';
+    ctx.font = '11px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(FEATURES_ALL[j], padL - 6, cy + 4);
+
+    if (isZero) {
+      // hollow bar
+      ctx.strokeStyle = isNoise ? '#484f58' : '#3fb95055';
+      ctx.lineWidth = 1.5;
+      var hollowW = Math.max(4, chartW * 0.02);
+      ctx.beginPath();
+      ctx.rect(padL, cy - barH / 2, hollowW, barH);
+      ctx.stroke();
+      // zeroed label
+      ctx.fillStyle = '#484f58'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('= 0', padL + hollowW + 4, cy + 3);
+    } else {
+      ctx.fillStyle = isNoise ? '#484f5899' : '#58a6ff';
+      ctx.beginPath();
+      ctx.roundRect
+        ? ctx.roundRect(padL, cy - barH / 2, barW, barH, 3)
+        : ctx.rect(padL, cy - barH / 2, barW, barH);
+      ctx.fill();
+      // value label
+      ctx.fillStyle = isNoise ? '#8b949e' : '#e6edf3';
+      ctx.font = '10px monospace'; ctx.textAlign = 'left';
+      ctx.fillText(beta[j].toFixed(3), padL + barW + 4, cy + 3);
+    }
+  }
+
+  // legend
+  ctx.fillStyle = '#58a6ff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillRect(padL, padT - 16, 10, 8);
+  ctx.fillStyle = '#e6edf3';
+  ctx.fillText('real features (servers, db_reads, storage_tb, api_calls, deploys)', padL + 14, padT - 8);
+  ctx.fillStyle = '#484f5899';
+  ctx.fillRect(padL + 14, padT - 16 + 12, 10, 8); // correction: place it right
+  ctx.fillStyle = '#8b949e';
+}
+
+// ===================================================================
+// TAB 2: UNREGULARISED (OLS)
+// ===================================================================
+var overfitTrained = false;
+
+function trainUnregularised() {
+  var info = standardise(X_TRAIN);
+  var beta = ridgeFit(info.Xs, Y_TRAIN, 0);  // alpha=0 = OLS
+  var meanY = Y_TRAIN.reduce(function(a,b){ return a+b; }) / Y_TRAIN.length;
+
+  var trainPred = predictFromBeta(info, beta, X_TRAIN, meanY);
+  var testPred  = predictFromBeta(info, beta, X_TEST,  meanY);
+
+  var r2Train = computeR2(Y_TRAIN, trainPred);
+  var r2Test  = computeR2(Y_TEST,  testPred);
+  var gap     = r2Train - r2Test;
+
+  // normalise betas for display
+  var maxAbs = Math.max.apply(null, beta.map(Math.abs));
+
+  document.getElementById('overfit-canvas-wrap').style.display = 'block';
+  drawCoeffChart('overfit-canvas', beta, maxAbs, 'Unregularised');
+
+  var noise_nonzero = beta.slice(5).filter(function(b){ return Math.abs(b) > 1e-8; }).length;
+
+  document.getElementById('overfit-stats').innerHTML =
+    '<div class="stat">Train R²: <span class="green">' + r2Train.toFixed(3) + '</span></div>' +
+    '<div class="stat">Test R²: <span class="' + (r2Test < 0.8 ? 'red' : 'yellow') + '">' + r2Test.toFixed(3) + '</span></div>' +
+    '<div class="stat">Gap: <span class="red">' + gap.toFixed(3) + '</span></div>' +
+    '<div class="stat">Noise coefs != 0: <span class="red">' + noise_nonzero + '/5</span></div>';
+
+  var msg = document.getElementById('overfit-msg');
+  msg.style.display = 'block';
+  var overStr = r2Test < 0.9
+    ? 'Model scored ' + r2Train.toFixed(3) + ' on training but only ' + r2Test.toFixed(3) + ' on test. Gap = ' + gap.toFixed(3) + ' — clear overfitting.\n' +
+      'All ' + noise_nonzero + ' noise features have non-zero coefficients. The model memorised them.\nSolution: add a regularisation penalty. Go to Tab 3 or 4 to fix this.'
+    : 'Train R2=' + r2Train.toFixed(3) + ' Test R2=' + r2Test.toFixed(3) + '. Noise features: ' + noise_nonzero + '/5 have non-zero weights.';
+  msg.innerHTML = '<span class="red">' + overStr.replace(/\n/g, '<br>') + '</span>';
+  overfitTrained = true;
+}
+
+// ===================================================================
+// TAB 3: RIDGE
+// ===================================================================
+var ridgeCache = {};
+
+function getRidgeResult(alpha) {
+  if (ridgeCache[alpha] !== undefined) return ridgeCache[alpha];
+  var info = standardise(X_TRAIN);
+  var beta = ridgeFit(info.Xs, Y_TRAIN, alpha);
+  var meanY = Y_TRAIN.reduce(function(a,b){ return a+b; }) / Y_TRAIN.length;
+  var trainPred = predictFromBeta(info, beta, X_TRAIN, meanY);
+  var testPred  = predictFromBeta(info, beta, X_TEST,  meanY);
+  var res = {
+    beta: beta,
+    r2Train: computeR2(Y_TRAIN, trainPred),
+    r2Test:  computeR2(Y_TEST,  testPred),
+    info: info, meanY: meanY
+  };
+  ridgeCache[alpha] = res;
+  return res;
+}
+
+function updateRidge() {
+  var sliderVal = parseInt(document.getElementById('ridge-alpha-slider').value);
+  var alpha = ALPHA_STEPS[sliderVal];
+  document.getElementById('ridge-alpha-display').textContent = alpha;
+
+  var res = getRidgeResult(alpha);
+  var beta = res.beta;
+  var maxAbs = Math.max.apply(null, beta.map(Math.abs).concat([1e-12]));
+
+  drawCoeffChart('ridge-canvas', beta, maxAbs, 'Ridge');
+
+  var effZero = beta.filter(function(b){ return Math.abs(b) / maxAbs < 0.1; }).length;
+  var gap = res.r2Train - res.r2Test;
+
+  document.getElementById('ridge-stats').innerHTML =
+    '<div class="stat">α: <span style="color:#58a6ff;">' + alpha + '</span></div>' +
+    '<div class="stat">Train R²: <span class="' + (res.r2Train > 0.95 ? 'green' : 'yellow') + '">' + res.r2Train.toFixed(3) + '</span></div>' +
+    '<div class="stat">Test R²: <span class="' + (res.r2Test > 0.85 ? 'green' : res.r2Test > 0.7 ? 'yellow' : 'red') + '">' + res.r2Test.toFixed(3) + '</span></div>' +
+    '<div class="stat">Gap: <span class="' + (gap < 0.05 ? 'green' : gap < 0.15 ? 'yellow' : 'red') + '">' + gap.toFixed(3) + '</span></div>' +
+    '<div class="stat">Eff. zero (&lt;10%): <span class="yellow">' + effZero + '/10</span></div>';
+
+  var comment;
+  if (alpha === 0) {
+    comment = 'alpha=0: no penalty. Same as plain linear regression — noise features have large weights.';
+  } else if (alpha <= 5) {
+    comment = 'Small penalty: coefficients are slightly smaller. Noise features still visible but shrinking.';
+  } else if (alpha <= 50) {
+    comment = 'Medium penalty: noise features shrink faster than real features. Test R2 improving.';
+  } else if (alpha <= 100) {
+    comment = 'Large penalty: noise bars are much smaller. Test R2 near its best.';
+  } else {
+    comment = 'Very large penalty: all coefficients small, but real features also shrink — underfitting risk.';
+  }
+  document.getElementById('ridge-msg').innerHTML =
+    '<span class="blue">Ridge alpha=' + alpha + ':</span> ' + comment;
+}
+
+// ===================================================================
+// TAB 4: LASSO
+// ===================================================================
+var lassoCache = {};
+
+function getLassoResult(alpha) {
+  if (lassoCache[alpha] !== undefined) return lassoCache[alpha];
+  // Scale alpha for coordinate descent (matches sklearn convention with 1/n factor)
+  var info = standardise(X_TRAIN);
+  var scaledAlpha = alpha * 14;  // coordinate descent alpha needs scaling to match sklearn
+  var beta = lassoFit(info.Xs, Y_TRAIN, scaledAlpha, 500);
+  var meanY = Y_TRAIN.reduce(function(a,b){ return a+b; }) / Y_TRAIN.length;
+  var trainPred = predictFromBeta(info, beta, X_TRAIN, meanY);
+  var testPred  = predictFromBeta(info, beta, X_TEST,  meanY);
+  var res = {
+    beta: beta,
+    r2Train: computeR2(Y_TRAIN, trainPred),
+    r2Test:  computeR2(Y_TEST,  testPred),
+    info: info, meanY: meanY
+  };
+  lassoCache[alpha] = res;
+  return res;
+}
+
+function updateLasso() {
+  var sliderVal = parseInt(document.getElementById('lasso-alpha-slider').value);
+  var alpha = ALPHA_STEPS[sliderVal];
+  document.getElementById('lasso-alpha-display').textContent = alpha;
+
+  var res = getLassoResult(alpha);
+  var beta = res.beta;
+  var maxAbs = Math.max.apply(null, beta.map(Math.abs).concat([1e-12]));
+
+  drawCoeffChart('lasso-canvas', beta, maxAbs, 'Lasso');
+
+  var exactZero = beta.filter(function(b){ return Math.abs(b) < 1e-8; }).length;
+  var noiseZero = beta.slice(5).filter(function(b){ return Math.abs(b) < 1e-8; }).length;
+  var realZero  = beta.slice(0,5).filter(function(b){ return Math.abs(b) < 1e-8; }).length;
+  var gap = res.r2Train - res.r2Test;
+
+  document.getElementById('lasso-stats').innerHTML =
+    '<div class="stat">α: <span style="color:#d29922;">' + alpha + '</span></div>' +
+    '<div class="stat">Train R²: <span class="' + (res.r2Train > 0.95 ? 'green' : 'yellow') + '">' + res.r2Train.toFixed(3) + '</span></div>' +
+    '<div class="stat">Test R²: <span class="' + (res.r2Test > 0.85 ? 'green' : res.r2Test > 0.7 ? 'yellow' : 'red') + '">' + res.r2Test.toFixed(3) + '</span></div>' +
+    '<div class="stat">Gap: <span class="' + (gap < 0.05 ? 'green' : gap < 0.15 ? 'yellow' : 'red') + '">' + gap.toFixed(3) + '</span></div>' +
+    '<div class="stat">Exact zero: <span class="yellow">' + exactZero + '/10</span></div>' +
+    '<div class="stat">Noise zeroed: <span class="green">' + noiseZero + '/5</span></div>' +
+    '<div class="stat">Real zeroed: <span class="' + (realZero > 0 ? 'red' : 'green') + '">' + realZero + '/5</span></div>';
+
+  var comment;
+  if (alpha === 0) {
+    comment = 'alpha=0: no penalty. Noise features survive — hollow bars show zeroed features (none yet).';
+  } else if (exactZero === 0) {
+    comment = 'Small penalty: some coefficients near zero but not quite there yet.';
+  } else if (noiseZero === 5 && realZero === 0) {
+    comment = 'Sweet spot: all 5 noise features zeroed out. All 5 real features survive. Automatic feature selection!';
+  } else if (realZero > 0) {
+    comment = 'Penalty too large: real features are also being zeroed out — underfitting.';
+  } else {
+    comment = 'Lasso zeroing out noise features. Hollow bars = exactly zero — those features are dropped.';
+  }
+  document.getElementById('lasso-msg').innerHTML =
+    '<span style="color:#d29922;">Lasso alpha=' + alpha + ':</span> ' + comment;
+}
+
+// ===================================================================
+// QUIZ
+// ===================================================================
+var QUIZ = [
+  {
+    q: 'What does increasing alpha (penalty) in Ridge regression do?',
+    opts: [
+      ['Increases the number of features used by the model', false],
+      ['Shrinks all coefficients toward zero, reducing overfitting', true],
+      ['Forces irrelevant features to exactly zero', false],
+      ['Increases training R2 score', false]
+    ],
+    exp: 'Ridge penalises large coefficients with alpha times the sum of squared weights. A larger alpha means a heavier fine, which forces all weights closer to zero — reducing the model\'s tendency to memorise noise. It shrinks everything proportionally, but never reaches exactly zero.'
+  },
+  {
+    q: 'What makes Lasso different from Ridge?',
+    opts: [
+      ['Lasso uses squared coefficients in its penalty; Ridge uses absolute values', false],
+      ['Lasso trains faster on large datasets', false],
+      ['Lasso forces some coefficients to exactly zero — automatic feature selection', true],
+      ['Lasso only works when all features are real numbers', false]
+    ],
+    exp: 'Ridge uses an L2 penalty (sum of w^2) which shrinks coefficients but never to exactly zero. Lasso uses an L1 penalty (sum of |w|) which has a geometric property that drives irrelevant coefficients to exactly zero — effectively removing those features from the model. This is why Lasso is called an automatic feature selector.'
+  },
+  {
+    q: 'Your model has 50 features. You suspect only 10 are relevant. Which regularisation should you try first?',
+    opts: [
+      ['Ridge — it handles all types of features', false],
+      ['No regularisation — more features always means a better model', false],
+      ['Lasso — it will zero out the 40 irrelevant features automatically', true],
+      ['Neither — remove features manually before training', false]
+    ],
+    exp: 'When you have many potentially irrelevant features, Lasso is the right choice. Its L1 penalty drives irrelevant feature coefficients to exactly zero, automatically selecting the important ones. Ridge would shrink all 50 features toward zero but keep all of them in the model. Lasso gives you a sparse, interpretable model that uses only the features that actually help.'
+  }
+];
+
+var quizDone = {};
+var quizScore = 0;
+
+function renderQuiz() {
+  if (document.getElementById('quiz-body').innerHTML) return;
+  var html = '';
+  QUIZ.forEach(function(q, qi) {
+    html += '<div class="card"><div class="quiz-q"><strong>Q' + (qi+1) + ': ' + q.q + '</strong></div>';
+    q.opts.forEach(function(opt, oi) {
+      html += '<button class="opt" onclick="qAns(' + qi + ',' + oi + ')" id="q' + qi + 'o' + oi + '">' + opt[0] + '</button>';
+    });
+    html += '<div id="q' + qi + '-exp" style="display:none;margin-top:10px;font-size:0.84rem;color:#8b949e;background:#21262d;padding:12px;border-radius:6px;"></div>';
+    html += '<div class="celebrate" id="q' + qi + '-cel">✓ Correct!</div></div>';
+  });
+  document.getElementById('quiz-body').innerHTML = html;
+}
+
+function qAns(qi, oi) {
+  if (quizDone[qi]) return;
+  quizDone[qi] = true;
+  var q = QUIZ[qi];
+  var correct = q.opts[oi][1];
+  document.getElementById('q' + qi + 'o' + oi).className = 'opt ' + (correct ? 'correct' : 'wrong');
+  if (!correct) {
+    for (var i = 0; i < q.opts.length; i++) {
+      if (q.opts[i][1]) document.getElementById('q' + qi + 'o' + i).className = 'opt correct';
+    }
+  }
+  for (var i = 0; i < q.opts.length; i++) {
+    var btn = document.getElementById('q' + qi + 'o' + i);
+    if (btn) btn.disabled = true;
+  }
+  var expEl = document.getElementById('q' + qi + '-exp');
+  expEl.style.display = 'block';
+  expEl.textContent = 'Explanation: ' + q.exp;
+  if (correct) {
+    quizScore++;
+    document.getElementById('q' + qi + '-cel').style.display = 'block';
+  }
+  var doneCount = Object.keys(quizDone).length;
+  if (doneCount === QUIZ.length) {
+    setTimeout(function() {
+      var res = document.getElementById('quiz-result');
+      res.style.display = 'block';
+      var scoreColor = quizScore === 3 ? '#3fb950' : '#d29922';
+      var msg = quizScore === 3
+        ? 'Perfect — Week 4 complete! You understand regularisation.'
+        : quizScore === 2
+        ? 'Almost — review the explanation for the one you missed.'
+        : 'Review the What Is It? tab and the Ridge/Lasso dials, then try again.';
+      res.innerHTML = '<div class="card" style="text-align:center;">' +
+        '<div style="font-size:2rem;font-weight:800;color:' + scoreColor + ';margin-bottom:8px;">' + quizScore + ' / 3</div>' +
+        '<p style="color:#8b949e;">' + msg + '</p>' +
+        (quizScore >= 2 ? '<br><a href="../index.html" style="color:#3fb950;font-size:0.95rem;">→ Phase 2 Overview</a>' : '') +
+        '</div>';
+    }, 500);
+  }
+}
+
+// ===================================================================
+// COPY CODE
+// ===================================================================
+function copyCode(preId, btnId) {
+  var text = document.getElementById(preId).textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById(btnId);
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#3fb950';
+    setTimeout(function() { btn.textContent = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+// ===================================================================
+// POPULATE CODE SNIPPETS (textContent only — no template literals)
+// ===================================================================
+(function populateCode() {
+  document.getElementById('code-overfit').textContent = [
+    'import numpy as np',
+    'from sklearn.linear_model import LinearRegression',
+    'from sklearn.metrics import r2_score',
+    '',
+    '# 10 features: 5 real + 5 noise',
+    'np.random.seed(42)',
+    'X_real  = np.array([[3,2,5,10,4],[3,3,5,12,5],[4,3,6,13,4],[4,4,6,15,6],',
+    '                     [5,4,7,16,5],[5,5,7,18,7],[6,5,8,20,6],[6,6,8,22,8],',
+    '                     [7,6,9,24,7],[7,7,9,26,9],[8,7,10,28,8],[8,8,10,30,10],',
+    '                     [9,8,11,32,9],[9,9,11,34,11],[10,9,12,36,10],[10,10,12,38,12],',
+    '                     [11,10,13,40,11],[11,11,13,42,13],[12,11,14,44,12],[12,12,14,46,14]])',
+    'X_noise = np.random.uniform(0, 10, (20, 5))',
+    'X = np.hstack([X_real, X_noise])',
+    'y = np.array([2180,2530,2690,3150,3320,3780,4020,4350,4680,5020,',
+    '              5310,5650,5980,6300,6620,6950,7280,7620,7870,8250])',
+    '',
+    'model = LinearRegression().fit(X[:14], y[:14])',
+    'print(f"Train R2: {r2_score(y[:14], model.predict(X[:14])):.3f}")',
+    'print(f"Test  R2: {r2_score(y[14:], model.predict(X[14:])):.3f}")',
+    'print("Coefficients:", dict(zip(',
+    '    ["servers","db_reads","storage_tb","api_calls","deploys",',
+    '     "noise_1","noise_2","noise_3","noise_4","noise_5"],',
+    '    model.coef_.round(2))))'
+  ].join('\n');
+
+  document.getElementById('code-ridge').textContent = [
+    'from sklearn.linear_model import Ridge',
+    'from sklearn.preprocessing import StandardScaler',
+    'from sklearn.pipeline import make_pipeline',
+    'from sklearn.metrics import r2_score',
+    '',
+    'feature_names = ["servers","db_reads","storage_tb","api_calls","deploys",',
+    '                 "noise_1","noise_2","noise_3","noise_4","noise_5"]',
+    '',
+    'for alpha in [0, 1, 5, 10, 50, 100, 500]:',
+    '    model = make_pipeline(StandardScaler(), Ridge(alpha=alpha))',
+    '    model.fit(X[:14], y[:14])',
+    '    tr = r2_score(y[:14], model.predict(X[:14]))',
+    '    te = r2_score(y[14:], model.predict(X[14:]))',
+    '    coefs = model.named_steps["ridge"].coef_',
+    '    print(f"alpha={alpha:4d}  train={tr:.3f}  test={te:.3f}  max_noise={max(abs(coefs[5:])):.2f}")'
+  ].join('\n');
+
+  document.getElementById('code-lasso').textContent = [
+    'from sklearn.linear_model import Lasso',
+    'from sklearn.preprocessing import StandardScaler',
+    'from sklearn.pipeline import make_pipeline',
+    'from sklearn.metrics import r2_score',
+    '',
+    'feature_names = ["servers","db_reads","storage_tb","api_calls","deploys",',
+    '                 "noise_1","noise_2","noise_3","noise_4","noise_5"]',
+    '',
+    'for alpha in [0.1, 1, 5, 10, 50, 100, 500]:',
+    '    model = make_pipeline(StandardScaler(), Lasso(alpha=alpha, max_iter=5000))',
+    '    model.fit(X[:14], y[:14])',
+    '    coefs = model.named_steps["lasso"].coef_',
+    '    n_zero = sum(abs(c) < 0.01 for c in coefs)',
+    '    noise_zero = sum(abs(c) < 0.01 for c in coefs[5:])',
+    '    tr = r2_score(y[:14], model.predict(X[:14]))',
+    '    te = r2_score(y[14:], model.predict(X[14:]))',
+    '    print(f"alpha={alpha:5.1f}  train={tr:.3f}  test={te:.3f}  zeroed={n_zero}/10  noise_zero={noise_zero}/5")'
+  ].join('\n');
+})();
+
+// ===================================================================
+// INIT — draw Ridge and Lasso at alpha=0 on first tab switch
+// ===================================================================
+setTimeout(function() {
+  // Pre-warm the alpha=0 results so first render is instant
+  getRidgeResult(0);
+  getLassoResult(0);
+}, 50);
+</script>
 </body>
 </html>

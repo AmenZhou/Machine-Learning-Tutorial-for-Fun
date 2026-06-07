@@ -3,33 +3,822 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phase 2 Week 3 — Buy or Pass? Classifier</title>
+<title>Phase 2 Week 3 — 5-Feature Bill Predictor</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .coming { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:48px; text-align:center; max-width:520px; }
-  h1 { font-size:2rem; margin-bottom:12px; }
-  p { color:#8b949e; line-height:1.8; margin-bottom:20px; }
-  a { color:#bc8cff; text-decoration:none; }
-  .tag { display:inline-block; background:#21262d; border-radius:4px; padding:3px 10px; font-size:0.78rem; color:#8b949e; margin:4px; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; }
+  header { background:#161b22; border-bottom:1px solid #30363d; padding:16px 40px; display:flex; align-items:center; gap:16px; }
+  header a { color:#bc8cff; text-decoration:none; font-size:0.9rem; }
+  header h1 { font-size:1.4rem; }
+  .badge { background:#1a0a3a; color:#bc8cff; padding:3px 10px; border-radius:12px; font-size:0.75rem; border:1px solid #bc8cff44; }
+  .tabs { display:flex; gap:4px; padding:0 40px; background:#161b22; border-bottom:1px solid #30363d; }
+  .tab { padding:14px 22px; cursor:pointer; font-size:0.9rem; border-bottom:3px solid transparent; color:#8b949e; transition:all 0.2s; }
+  .tab:hover { color:#e6edf3; }
+  .tab.active { color:#bc8cff; border-bottom-color:#bc8cff; }
+  .panel { display:none; padding:36px 40px; max-width:960px; margin:0 auto; }
+  .panel.active { display:block; }
+  h2 { font-size:1.4rem; margin-bottom:8px; }
+  .hook { background:#180a2a; border:1px solid #bc8cff55; border-radius:10px; padding:16px 20px; margin-bottom:24px; }
+  .hook-label { font-size:0.75rem; color:#bc8cff; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .hook p { font-size:0.95rem; color:#e6edf3; line-height:1.7; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:24px; margin-bottom:20px; }
+  .card h3 { font-size:1rem; margin-bottom:14px; color:#bc8cff; }
+  canvas { border-radius:8px; display:block; }
+  button { padding:10px 22px; border-radius:8px; cursor:pointer; font-size:0.88rem; font-weight:700; border:1px solid #7c4aaa; background:#4a1a7a; color:#fff; transition:background 0.2s; margin:4px; }
+  button:hover { background:#7c4aaa; }
+  button.green { background:#238636; border-color:#2ea043; }
+  button.green:hover { background:#2ea043; }
+  button.secondary { background:#21262d; border-color:#30363d; color:#e6edf3; }
+  button.secondary:hover { background:#30363d; }
+  .stat-row { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .stat { background:#21262d; border-radius:6px; padding:10px 16px; font-size:0.85rem; }
+  .stat span { font-size:1.2rem; font-weight:800; font-family:monospace; display:block; }
+  .result-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:14px 16px; font-family:monospace; font-size:0.86rem; line-height:1.9; margin-top:14px; }
+  .green { color:#3fb950; } .red { color:#ff7b72; } .yellow { color:#d29922; } .orange { color:#ff9944; } .blue { color:#58a6ff; } .purple { color:#bc8cff; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .info-box { border-radius:8px; padding:14px 16px; font-size:0.85rem; line-height:1.8; margin:14px 0; }
+  .info-blue { background:#1f3a5f22; border:1px solid #1f6feb; color:#8b949e; }
+  .info-green { background:#1a3a1a; border:1px solid #2ea043; color:#8b949e; }
+  .info-orange { background:#2a1a00; border:1px solid #ff994455; color:#8b949e; }
+  .info-purple { background:#180a2a; border:1px solid #bc8cff44; color:#8b949e; }
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { background:#21262d; padding:8px 12px; text-align:left; color:#8b949e; }
+  td { padding:8px 12px; border-bottom:1px solid #21262d; font-family:monospace; }
+  .quiz-q { background:#1f3a5f22; border:1px solid #1f6feb; border-radius:8px; padding:16px; margin:14px 0; }
+  .opt { display:block; width:100%; text-align:left; margin:6px 0; padding:10px 14px; background:#21262d; border:1px solid #30363d; border-radius:6px; cursor:pointer; color:#e6edf3; transition:all 0.2s; }
+  .opt:hover { border-color:#bc8cff; color:#bc8cff; }
+  .opt.correct { background:#1a7f37; border-color:#2ea043; color:#3fb950; }
+  .opt.wrong { background:#da363322; border-color:#f85149; color:#ff7b72; }
+  .celebrate { background:#1a7f3722; border:1px solid #2ea043; border-radius:8px; padding:16px; margin-top:14px; display:none; color:#3fb950; font-size:0.9rem; }
+  .checkbox-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .feat-check { display:flex; align-items:center; gap:7px; background:#21262d; border:1px solid #30363d; border-radius:6px; padding:7px 14px; cursor:pointer; user-select:none; font-size:0.85rem; transition:border-color 0.2s; }
+  .feat-check:hover { border-color:#bc8cff; }
+  .feat-check input { accent-color:#bc8cff; width:16px; height:16px; cursor:pointer; }
+  .feat-check.checked { border-color:#bc8cff55; background:#180a2a; }
+  .model-eq { font-family:monospace; font-size:0.88rem; color:#bc8cff; word-break:break-all; margin-top:8px; }
+  code { background:#21262d; border-radius:4px; padding:2px 6px; font-family:monospace; font-size:0.86em; color:#bc8cff; }
+  pre { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:16px; font-family:monospace; font-size:0.82rem; line-height:1.7; overflow-x:auto; color:#e6edf3; margin-top:12px; white-space:pre; }
+  .cta-row { display:flex; align-items:center; gap:14px; margin-top:20px; }
+  .step-badge { background:#21262d; border:1px solid #bc8cff44; color:#bc8cff; border-radius:6px; padding:4px 12px; font-size:0.78rem; }
+  @media(max-width:640px){
+    .two-col { grid-template-columns:1fr; }
+    .panel { padding:16px 12px; }
+    header { padding:12px 16px; }
+    header h1 { font-size:1.2rem; }
+    .tabs { padding:0; overflow-x:auto; white-space:nowrap; flex-wrap:nowrap; }
+    .tab { padding:12px 14px; font-size:0.82rem; flex-shrink:0; }
+    canvas { width:100% !important; }
+    button { padding:8px 14px; font-size:0.82rem; }
+  }
 </style>
 </head>
 <body>
-<div class="coming">
-  <div style="font-size:3rem;margin-bottom:16px;">🔀</div>
-  <h1>Buy or Pass? Classifier</h1>
-  <p>Coming soon. You'll switch from predicting numbers to predicting yes/no — and discover why that requires a completely different approach (logistic regression + sigmoid function).</p>
-  <div>
-    <span class="tag">Logistic Regression</span>
-    <span class="tag">Sigmoid Function</span>
-    <span class="tag">Classification</span>
-    <span class="tag">Accuracy</span>
-    <span class="tag">Decision Boundary</span>
-  </div>
-  <br>
-  <a href="../../index.html">← Back to Arena</a>
-  &nbsp;·&nbsp;
-  <a href="../week2/index.html">← Week 2: Overfitting Arena</a>
+
+<header>
+  <a href="../../index.html">&#8592; Arena</a>
+  <span style="color:#30363d">|</span>
+  <a href="../week2/index.html">&#8592; Week 2</a>
+  <h1>&#x1F522; 5-Feature Bill Predictor</h1>
+  <span class="badge">Multiple Regression</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">&#x1F4D6; What is it?</div>
+  <div class="tab" onclick="switchTab(1)">&#x1F3AE; Feature Builder</div>
+  <div class="tab" onclick="switchTab(2)">&#x1F4CA; Feature Importance</div>
+  <div class="tab" onclick="switchTab(3)">&#x1F50D; Correlation Explorer</div>
+  <div class="tab" onclick="switchTab(4)">&#x1F393; Quiz</div>
 </div>
+
+<!-- ============================================================ TAB 1 ============================================================ -->
+<div class="panel active" id="panel-0">
+  <h2>&#x1F4D6; What is Multiple Regression?</h2>
+
+  <div class="hook">
+    <div class="hook-label">Plain-English Hook</div>
+    <p>Week 1: one dial (servers &#8594; bill). Week 3: five dials. Each feature pulls the prediction up or down by a different amount. The model finds the best weight for every dial at once.</p>
+  </div>
+
+  <div class="card">
+    <h3>From 1 Feature to 5</h3>
+    <p style="color:#8b949e; font-size:0.88rem; line-height:1.8; margin-bottom:14px;">
+      In Week 1, linear regression drew one line through a scatter plot: <code>bill = slope x servers + intercept</code>.
+      With multiple regression, we extend that idea to handle five features simultaneously:
+    </p>
+    <div style="background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:16px; text-align:center;">
+      <div style="font-family:monospace; font-size:0.95rem; color:#e6edf3; line-height:2.4;">
+        <span class="purple">bill</span> = <span class="orange">a</span>&#183;<span class="blue">servers</span>
+             + <span class="orange">b</span>&#183;<span class="blue">db_reads</span>
+             + <span class="orange">c</span>&#183;<span class="blue">storage</span>
+             + <span class="orange">d</span>&#183;<span class="blue">api_calls</span>
+             + <span class="orange">e</span>&#183;<span class="blue">deploys</span>
+             + <span class="green">intercept</span>
+      </div>
+      <div style="font-size:0.78rem; color:#8b949e; margin-top:8px;">
+        Each coloured letter is a <em>coefficient</em> &#8212; how much the bill changes for each unit increase in that feature.
+      </div>
+    </div>
+    <div class="info-blue" style="margin-top:14px;">
+      <strong class="blue">Connection to Week 1:</strong> In Week 1, slope = how much the bill changes per additional server.
+      Now there are 5 slopes, one per feature &#8212; each measures the marginal cost of that resource.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Why More Features Help</h3>
+    <p style="color:#8b949e; font-size:0.88rem; line-height:1.8;">
+      Your AWS bill doesn&#8217;t just depend on server count. DB reads, storage, API traffic, and deploy frequency all add cost.
+      A one-feature model ignores up to 80% of the signal &#8212; like trying to guess a recipe&#8217;s calories from the flour alone.
+    </p>
+    <div style="margin-top:14px; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; text-align:center;">
+      <div style="background:#21262d; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem;">&#x1F5A5;&#xFE0F;</div>
+        <div style="font-size:0.78rem; color:#bc8cff; margin-top:4px;">servers</div>
+        <div style="font-size:0.72rem; color:#8b949e;">~$200/unit</div>
+      </div>
+      <div style="background:#21262d; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem;">&#x1F5C4;&#xFE0F;</div>
+        <div style="font-size:0.78rem; color:#bc8cff; margin-top:4px;">db_reads</div>
+        <div style="font-size:0.72rem; color:#8b949e;">~$150/M/day</div>
+      </div>
+      <div style="background:#21262d; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem;">&#x1F4BE;</div>
+        <div style="font-size:0.78rem; color:#bc8cff; margin-top:4px;">storage_tb</div>
+        <div style="font-size:0.72rem; color:#8b949e;">~$80/TB</div>
+      </div>
+      <div style="background:#21262d; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem;">&#x1F310;</div>
+        <div style="font-size:0.78rem; color:#bc8cff; margin-top:4px;">api_calls</div>
+        <div style="font-size:0.72rem; color:#8b949e;">~$30/M/day</div>
+      </div>
+      <div style="background:#21262d; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem;">&#x1F680;</div>
+        <div style="font-size:0.78rem; color:#bc8cff; margin-top:4px;">deploys</div>
+        <div style="font-size:0.72rem; color:#8b949e;">~$100/deploy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How It Still Works</h3>
+    <p style="color:#8b949e; font-size:0.88rem; line-height:1.8; margin-bottom:12px;">
+      Under the hood it&#8217;s the same math from Week 1 &#8212; Ordinary Least Squares (OLS). The goal is still to minimise
+      the sum of squared errors between predicted and actual bills. The only difference: instead of solving for
+      one slope, we solve for five simultaneously using matrix algebra.
+    </p>
+    <div class="two-col">
+      <div style="background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:14px;">
+        <div style="font-size:0.75rem; color:#ff9944; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Week 1</div>
+        <div style="font-family:monospace; font-size:0.85rem; color:#e6edf3; line-height:1.9;">
+          Minimise &#931;(y &#8722; &#375;)&#178;<br>
+          1 slope, 1 intercept<br>
+          Solve: 2 equations
+        </div>
+      </div>
+      <div style="background:#0d1117; border:1px solid #bc8cff44; border-radius:8px; padding:14px;">
+        <div style="font-size:0.75rem; color:#bc8cff; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Week 3</div>
+        <div style="font-family:monospace; font-size:0.85rem; color:#e6edf3; line-height:1.9;">
+          Minimise &#931;(y &#8722; &#375;)&#178;<br>
+          5 slopes, 1 intercept<br>
+          Solve: X&#7488;X&#946; = X&#7488;y
+        </div>
+      </div>
+    </div>
+    <div class="info-purple" style="margin-top:12px;">
+      <strong class="purple">New term &#8212; Multicollinearity:</strong> When two features are highly correlated with each other
+      (e.g., servers and db_reads both go up together), the model struggles to separate their individual contributions.
+      We&#8217;ll explore this in Tab 4.
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <button onclick="switchTab(1)" class="green">Play the Feature Builder &#8594;</button>
+    <span class="step-badge">Tab 2 is the main game</span>
+  </div>
+</div>
+
+<!-- ============================================================ TAB 2 ============================================================ -->
+<div class="panel" id="panel-1">
+  <h2>&#x1F3AE; Feature Builder</h2>
+
+  <div class="hook">
+    <div class="hook-label">Play First</div>
+    <p>Toggle features on and off. Watch R&#178; climb as you add real features &#8212; and barely change when you add noise.
+    The scatter plot shows <strong>actual vs predicted</strong> bill for each month: the closer the dots hug the diagonal line, the better the model.</p>
+  </div>
+
+  <div class="card">
+    <h3>CloudSync&#8217;s Monthly Bill &#8212; 20 Months of Data</h3>
+
+    <div class="checkbox-row" id="feat-checks">
+      <label class="feat-check checked" id="lbl-0">
+        <input type="checkbox" checked onchange="updateFeatures()"> &#x1F5A5;&#xFE0F; servers
+      </label>
+      <label class="feat-check checked" id="lbl-1">
+        <input type="checkbox" checked onchange="updateFeatures()"> &#x1F5C4;&#xFE0F; db_reads (M/day)
+      </label>
+      <label class="feat-check checked" id="lbl-2">
+        <input type="checkbox" checked onchange="updateFeatures()"> &#x1F4BE; storage_tb
+      </label>
+      <label class="feat-check checked" id="lbl-3">
+        <input type="checkbox" checked onchange="updateFeatures()"> &#x1F310; api_calls (M/day)
+      </label>
+      <label class="feat-check checked" id="lbl-4">
+        <input type="checkbox" checked onchange="updateFeatures()"> &#x1F680; deploys/month
+      </label>
+    </div>
+
+    <canvas id="cvActualVsPred" width="860" height="320" style="background:#0d1117; width:100%;"></canvas>
+
+    <div class="stat-row">
+      <div class="stat">Features used <span id="stat-count" class="purple">5</span></div>
+      <div class="stat">R&#178; <span id="stat-r2" class="green">&#8212;</span></div>
+      <div class="stat">MSE <span id="stat-mse" class="yellow">&#8212;</span></div>
+    </div>
+
+    <div class="model-eq" id="model-eq">bill = &#8230;</div>
+
+    <div class="result-box" id="feat-message">Select features above to see the model.</div>
+  </div>
+
+  <div class="card">
+    <h3>The Python Code</h3>
+    <pre id="code-tab2"></pre>
+  </div>
+</div>
+
+<!-- ============================================================ TAB 3 ============================================================ -->
+<div class="panel" id="panel-2">
+  <h2>&#x1F4CA; Feature Importance</h2>
+
+  <div class="hook">
+    <div class="hook-label">Engineering Question</div>
+    <p>Which monitoring metric predicts the bill most reliably? Not the one with the biggest raw coefficient &#8212;
+    the one that explains the most variance when we account for each feature&#8217;s scale.</p>
+  </div>
+
+  <div class="card">
+    <h3>Normalised Importance (Standardised Coefficients)</h3>
+    <button class="green" onclick="computeImportance()">&#9654; Compute importance</button>
+    <canvas id="cvImportance" width="860" height="280" style="background:#0d1117; margin-top:14px; width:100%;"></canvas>
+    <div id="importance-table" style="margin-top:16px;"></div>
+    <div class="info-box info-purple" style="margin-top:10px;">
+      <strong class="purple">Why normalise?</strong>
+      Servers has the highest raw coefficient (~$200/unit) but api_calls varies the most (10 &#8594; 46),
+      so its actual impact on the bill is comparable. <em>Normalised importance = |coef| &#215; std(feature) / std(bill)</em>.
+      This accounts for scale differences so you can compare apples to apples.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Python Code</h3>
+    <pre id="code-tab3"></pre>
+  </div>
+</div>
+
+<!-- ============================================================ TAB 4 ============================================================ -->
+<div class="panel" id="panel-3">
+  <h2>&#x1F50D; Correlation Explorer</h2>
+
+  <div class="hook">
+    <div class="hook-label">Before You Model</div>
+    <p>Before building the model, check: which features are highly correlated with the bill? And with each other?
+    Correlated features can confuse the model &#8212; this is called <strong>multicollinearity</strong>.</p>
+  </div>
+
+  <div class="card">
+    <h3>Pearson Correlation Matrix (5 features + bill)</h3>
+    <button class="green" onclick="computeCorr()">&#9654; Compute correlations</button>
+    <canvas id="cvCorr" width="860" height="240" style="background:#0d1117; margin-top:14px; width:100%;"></canvas>
+    <div id="corr-interp" style="margin-top:14px;"></div>
+    <div class="info-box info-orange" style="margin-top:10px;">
+      <strong class="orange">Multicollinearity note:</strong>
+      All 5 features are strongly correlated with the bill &#8212; that&#8217;s good, they carry useful signal.
+      They&#8217;re also correlated with each other (because the company grew steadily). This is
+      <em>multicollinearity</em>: a warning sign for very large datasets or noisy data,
+      but less of an issue here with clean, structured growth data.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Python Code</h3>
+    <pre id="code-tab4"></pre>
+  </div>
+</div>
+
+<!-- ============================================================ TAB 5 ============================================================ -->
+<div class="panel" id="panel-4">
+  <h2>&#x1F393; Quiz &#8212; Multiple Regression</h2>
+
+  <div class="hook">
+    <div class="hook-label">Test Your Understanding</div>
+    <p>Three questions. Think it through before clicking &#8212; there&#8217;s no timer, no penalty for reading carefully.</p>
+  </div>
+
+  <div class="quiz-q">
+    <p style="font-weight:700; margin-bottom:10px;">Q1. You add a 6th feature: <code>random_number</code>. R&#178; goes from 0.998 to 0.999. Should you keep it?</p>
+    <button class="opt" onclick="answer(this, false, 'q1')">Yes &#8212; R&#178; improved, so the feature adds value.</button>
+    <button class="opt" onclick="answer(this, true,  'q1')">No &#8212; tiny R&#178; gain from random noise; it reduces generalisation and adds model complexity.</button>
+    <button class="opt" onclick="answer(this, false, 'q1')">Maybe &#8212; it depends on whether R&#178; improves on new data.</button>
+    <div class="celebrate" id="fb-q1">
+      Correct! A random feature will almost always cause a tiny R&#178; increase on training data (overfitting).
+      Use <em>adjusted R&#178;</em> or hold-out validation to test whether a new feature really earns its place.
+    </div>
+  </div>
+
+  <div class="quiz-q">
+    <p style="font-weight:700; margin-bottom:10px;">Q2. Feature importance shows <code>servers = 0.95</code>, <code>db_reads = 0.12</code>. What does this mean?</p>
+    <button class="opt" onclick="answer(this, false, 'q2')">Servers costs $0.95 per unit in the model.</button>
+    <button class="opt" onclick="answer(this, true,  'q2')">Servers explains much more variance in the bill than db_reads (after accounting for each feature&#8217;s scale).</button>
+    <button class="opt" onclick="answer(this, false, 'q2')">Db_reads is 88% less important and should always be removed.</button>
+    <div class="celebrate" id="fb-q2">
+      Correct! Normalised importance (standardised coefficient) measures how much each feature&#8217;s natural variation
+      drives the bill. Servers dominates; db_reads contributes but is secondary. &#8220;Remove it&#8221; is too strong &#8212;
+      it may still help in other datasets or with different variance patterns.
+    </div>
+  </div>
+
+  <div class="quiz-q">
+    <p style="font-weight:700; margin-bottom:10px;">Q3. Multiple regression finds: <code>bill = 200&#183;servers + 150&#183;db + 80&#183;storage + 30&#183;api + 100&#183;deploys + 180</code>. What is <code>180</code>?</p>
+    <button class="opt" onclick="answer(this, false, 'q3')">The average bill across all months.</button>
+    <button class="opt" onclick="answer(this, false, 'q3')">A regularisation penalty to prevent overfitting.</button>
+    <button class="opt" onclick="answer(this, true,  'q3')">The intercept &#8212; the base bill when all features are zero (fixed overhead).</button>
+    <div class="celebrate" id="fb-q3">
+      Correct! The intercept is the model&#8217;s baseline prediction when every feature equals zero.
+      In practice it represents fixed costs &#8212; account overhead, minimum charges &#8212; that exist regardless
+      of compute usage.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ SCRIPTS ============================================================ -->
+<script>
+var FEATURES = ['servers','db_reads','storage_tb','api_calls','deploys'];
+var DATA = [
+  {x:[3,2,5,10,4],   y:2180},
+  {x:[3,3,5,12,5],   y:2530},
+  {x:[4,3,6,13,4],   y:2690},
+  {x:[4,4,6,15,6],   y:3150},
+  {x:[5,4,7,16,5],   y:3320},
+  {x:[5,5,7,18,7],   y:3780},
+  {x:[6,5,8,20,6],   y:4020},
+  {x:[6,6,8,22,8],   y:4350},
+  {x:[7,6,9,24,7],   y:4680},
+  {x:[7,7,9,26,9],   y:5020},
+  {x:[8,7,10,28,8],  y:5310},
+  {x:[8,8,10,30,10], y:5650},
+  {x:[9,8,11,32,9],  y:5980},
+  {x:[9,9,11,34,11], y:6300},
+  {x:[10,9,12,36,10],y:6620},
+  {x:[10,10,12,38,12],y:6950},
+  {x:[11,10,13,40,11],y:7280},
+  {x:[11,11,13,42,13],y:7620},
+  {x:[12,11,14,44,12],y:7870},
+  {x:[12,12,14,46,14],y:8250}
+];
+
+function gaussianElim(A, b) {
+  var n = b.length;
+  var M = A.map(function(row, i) { return row.concat([b[i]]); });
+  for (var col = 0; col < n; col++) {
+    var maxRow = col;
+    for (var r = col+1; r < n; r++) {
+      if (Math.abs(M[r][col]) > Math.abs(M[maxRow][col])) maxRow = r;
+    }
+    var tmp = M[col]; M[col] = M[maxRow]; M[maxRow] = tmp;
+    if (Math.abs(M[col][col]) < 1e-10) return new Array(n).fill(0);
+    for (var r2 = 0; r2 < n; r2++) {
+      if (r2 === col) continue;
+      var f = M[r2][col] / M[col][col];
+      for (var k = col; k <= n; k++) M[r2][k] -= f * M[col][k];
+    }
+  }
+  return M.map(function(row, i) { return row[n] / row[i]; });
+}
+
+function olsFit(idxs) {
+  var Xmat = DATA.map(function(d) {
+    return [1].concat(idxs.map(function(j) { return d.x[j]; }));
+  });
+  var y = DATA.map(function(d) { return d.y; });
+  var p = Xmat[0].length;
+  var XtX = [];
+  for (var i = 0; i < p; i++) {
+    XtX[i] = [];
+    for (var j = 0; j < p; j++) {
+      XtX[i][j] = Xmat.reduce(function(s, row) { return s + row[i]*row[j]; }, 0);
+    }
+  }
+  var Xty = [];
+  for (var i = 0; i < p; i++) {
+    Xty[i] = Xmat.reduce(function(s, row, k) { return s + row[i]*y[k]; }, 0);
+  }
+  return gaussianElim(XtX, Xty);
+}
+
+function predict(coeffs, idxs) {
+  return DATA.map(function(d) {
+    var pred = coeffs[0];
+    idxs.forEach(function(j, k) { pred += coeffs[k+1] * d.x[j]; });
+    return pred;
+  });
+}
+
+function r2score(yTrue, yPred) {
+  var mean = yTrue.reduce(function(a,b){return a+b;})/yTrue.length;
+  var ssTot = yTrue.reduce(function(s,y){return s+(y-mean)*(y-mean);},0);
+  var ssRes = yTrue.reduce(function(s,y,i){return s+(y-yPred[i])*(y-yPred[i]);},0);
+  return 1 - ssRes/ssTot;
+}
+
+function msescore(yTrue, yPred) {
+  return yTrue.reduce(function(s,y,i){return s+(y-yPred[i])*(y-yPred[i]);},0)/yTrue.length;
+}
+
+function pearsonR(a, b) {
+  var n = a.length;
+  var ma = a.reduce(function(s,v){return s+v;})/n;
+  var mb = b.reduce(function(s,v){return s+v;})/n;
+  var num = a.reduce(function(s,v,i){return s+(v-ma)*(b[i]-mb);},0);
+  var den = Math.sqrt(
+    a.reduce(function(s,v){return s+(v-ma)*(v-ma);},0) *
+    b.reduce(function(s,v){return s+(v-mb)*(v-mb);},0)
+  );
+  return den < 1e-10 ? 0 : num/den;
+}
+
+function stdDev(arr) {
+  var n = arr.length;
+  var mean = arr.reduce(function(a,b){return a+b;})/n;
+  return Math.sqrt(arr.reduce(function(s,v){return s+(v-mean)*(v-mean);},0)/n);
+}
+
+// Tab switching
+function switchTab(idx) {
+  var tabs = document.querySelectorAll('.tab');
+  var panels = document.querySelectorAll('.panel');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', i === idx);
+    panels[i].classList.toggle('active', i === idx);
+  }
+  if (idx === 1) updateFeatures();
+  if (idx === 2) computeImportance();
+  if (idx === 3) computeCorr();
+}
+
+// Tab 2: Feature Builder
+function getSelectedIdxs() {
+  var cbs = document.querySelectorAll('#feat-checks input');
+  var idxs = [];
+  for (var i = 0; i < cbs.length; i++) { if (cbs[i].checked) idxs.push(i); }
+  return idxs;
+}
+
+function updateFeatures() {
+  var labels = document.querySelectorAll('#feat-checks label');
+  var cbs = document.querySelectorAll('#feat-checks input');
+  for (var i = 0; i < labels.length; i++) {
+    labels[i].classList.toggle('checked', cbs[i].checked);
+  }
+
+  var idxs = getSelectedIdxs();
+  var yTrue = DATA.map(function(d){return d.y;});
+
+  if (idxs.length === 0) {
+    document.getElementById('stat-count').textContent = '0';
+    document.getElementById('stat-r2').textContent = 'N/A';
+    document.getElementById('stat-mse').textContent = 'N/A';
+    document.getElementById('model-eq').textContent = 'bill = (no features selected)';
+    document.getElementById('feat-message').textContent = 'Select at least one feature to fit a model.';
+    drawActualVsPred([], []);
+    return;
+  }
+
+  var coeffs = olsFit(idxs);
+  var yPred = predict(coeffs, idxs);
+  var r2 = r2score(yTrue, yPred);
+  var mse = msescore(yTrue, yPred);
+
+  document.getElementById('stat-count').textContent = idxs.length;
+  document.getElementById('stat-r2').textContent = r2.toFixed(4);
+  document.getElementById('stat-mse').textContent = Math.round(mse).toLocaleString();
+
+  var terms = idxs.map(function(j, k) {
+    return coeffs[k+1].toFixed(1) + '·' + FEATURES[j];
+  });
+  document.getElementById('model-eq').textContent = 'bill = ' + terms.join(' + ') + ' + ' + coeffs[0].toFixed(1);
+
+  var msg;
+  if (r2 >= 0.999) msg = 'Excellent fit (R²≥0.999). The model captures almost all variation in the bill.';
+  else if (r2 >= 0.99) msg = 'Very strong fit (R²≥0.99). Near-perfect prediction for this dataset.';
+  else if (r2 >= 0.95) msg = 'Good fit (R²≥0.95). Most of the variance is explained.';
+  else if (r2 >= 0.80) msg = 'Moderate fit (R²≥0.80). Missing features are leaving signal on the table.';
+  else msg = 'Weak fit (R²<0.80). Several important features may be excluded.';
+  document.getElementById('feat-message').textContent = msg;
+
+  drawActualVsPred(yTrue, yPred);
+}
+
+function drawActualVsPred(yTrue, yPred) {
+  var canvas = document.getElementById('cvActualVsPred');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var PAD = {top:24, right:24, bottom:50, left:70};
+  var cW = W - PAD.left - PAD.right;
+  var cH = H - PAD.top - PAD.bottom;
+  var MIN_VAL = 1800, MAX_VAL = 9000;
+
+  function toX(v) { return PAD.left + (v - MIN_VAL) / (MAX_VAL - MIN_VAL) * cW; }
+  function toY(v) { return PAD.top + (1 - (v - MIN_VAL) / (MAX_VAL - MIN_VAL)) * cH; }
+
+  var ticks = [2000,3000,4000,5000,6000,7000,8000,9000];
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  ticks.forEach(function(v) {
+    ctx.beginPath(); ctx.moveTo(toX(v), PAD.top); ctx.lineTo(toX(v), PAD.top+cH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD.left, toY(v)); ctx.lineTo(PAD.left+cW, toY(v)); ctx.stroke();
+  });
+
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+  ctx.moveTo(toX(MIN_VAL), toY(MIN_VAL));
+  ctx.lineTo(toX(MAX_VAL), toY(MAX_VAL));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px Segoe UI,system-ui,sans-serif';
+  ctx.textAlign = 'center';
+  ticks.forEach(function(v) {
+    ctx.fillText('$' + (v/1000).toFixed(0) + 'k', toX(v), PAD.top+cH+18);
+  });
+  ctx.textAlign = 'right';
+  ticks.forEach(function(v) {
+    ctx.fillText('$' + (v/1000).toFixed(0) + 'k', PAD.left-6, toY(v)+4);
+  });
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px Segoe UI,system-ui,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Actual Bill', PAD.left + cW/2, H - 6);
+  ctx.save();
+  ctx.translate(16, PAD.top + cH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Predicted Bill', 0, 0);
+  ctx.restore();
+
+  ctx.fillStyle = '#3fb950';
+  ctx.font = '11px Segoe UI,system-ui,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('perfect fit', toX(MIN_VAL) + 4, toY(MIN_VAL) - 6);
+
+  if (yTrue.length === 0) return;
+
+  yTrue.forEach(function(actual, i) {
+    var pred = yPred[i];
+    var err = Math.abs(actual - pred);
+    var errNorm = Math.min(err / 500, 1);
+    var r = Math.round(errNorm * 255);
+    var g = Math.round((1 - errNorm) * 139);
+    ctx.beginPath();
+    ctx.arc(toX(actual), toY(pred), 5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(' + r + ',' + g + ',80,0.85)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+}
+
+// Tab 3: Feature Importance
+function computeImportance() {
+  var allIdxs = [0,1,2,3,4];
+  var coeffs = olsFit(allIdxs);
+  var yArr = DATA.map(function(d){return d.y;});
+  var stdY = stdDev(yArr);
+
+  var items = allIdxs.map(function(j, k) {
+    var featureArr = DATA.map(function(d){return d.x[j];});
+    var s = stdDev(featureArr);
+    var norm = Math.abs(coeffs[k+1]) * s / stdY;
+    return {name: FEATURES[j], coef: coeffs[k+1], std: s, norm: norm};
+  });
+  items.sort(function(a,b){return b.norm - a.norm;});
+
+  drawImportance(items);
+
+  var html = '<table><thead><tr><th>Feature</th><th>Coefficient</th><th>Std(feature)</th><th>Normalised Impact</th><th>Rank</th></tr></thead><tbody>';
+  items.forEach(function(item, i) {
+    var colour = i === 0 ? 'color:#3fb950' : 'color:#58a6ff';
+    html += '<tr style="' + colour + '">';
+    html += '<td>' + item.name + '</td>';
+    html += '<td>$' + item.coef.toFixed(1) + '</td>';
+    html += '<td>' + item.std.toFixed(2) + '</td>';
+    html += '<td>' + item.norm.toFixed(3) + '</td>';
+    html += '<td>#' + (i+1) + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('importance-table').innerHTML = html;
+}
+
+function drawImportance(items) {
+  var canvas = document.getElementById('cvImportance');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var PAD = {top:16, right:30, bottom:16, left:130};
+  var cW = W - PAD.left - PAD.right;
+  var cH = H - PAD.top - PAD.bottom;
+  var barH = Math.floor(cH / items.length) - 8;
+  var maxNorm = items[0].norm;
+
+  items.forEach(function(item, i) {
+    var y = PAD.top + i * (barH + 8);
+    var bw = (item.norm / maxNorm) * cW;
+    var colour = i === 0 ? '#3fb950' : '#58a6ff';
+
+    ctx.fillStyle = colour + '33';
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(PAD.left, y, bw, barH, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '13px Segoe UI,system-ui,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.name, PAD.left - 8, y + barH/2);
+
+    ctx.fillStyle = colour;
+    ctx.textAlign = 'left';
+    ctx.fillText(item.norm.toFixed(3), PAD.left + bw + 6, y + barH/2);
+  });
+}
+
+// Tab 4: Correlation Explorer
+function computeCorr() {
+  var allData = FEATURES.map(function(name, i) {
+    return DATA.map(function(d){return d.x[i];});
+  });
+  allData.push(DATA.map(function(d){return d.y;}));
+  var allCols = FEATURES.concat(['bill']);
+
+  var n = allCols.length;
+  var mat = [];
+  for (var i = 0; i < n; i++) {
+    mat[i] = [];
+    for (var j = 0; j < n; j++) {
+      mat[i][j] = pearsonR(allData[i], allData[j]);
+    }
+  }
+
+  drawCorrMatrix(mat, allCols);
+
+  var billCorrs = FEATURES.map(function(name, i) {
+    return {name: name, r: mat[i][5]};
+  });
+  billCorrs.sort(function(a,b){return b.r - a.r;});
+
+  var html = '<div class="result-box"><strong style="color:#bc8cff">Top 3 feature-to-bill correlations:</strong><br>';
+  billCorrs.slice(0,3).forEach(function(item, i) {
+    var barLen = Math.round(item.r * 15);
+    var bar = '';
+    for (var b = 0; b < barLen; b++) bar += '█';
+    html += '<span style="color:#3fb950">' + (i+1) + '. ' + item.name + '</span>';
+    html += '<span style="color:#8b949e">  r = ' + item.r.toFixed(3) + '  </span>';
+    html += '<span style="color:#58a6ff">' + bar + '</span><br>';
+  });
+  html += '</div>';
+  document.getElementById('corr-interp').innerHTML = html;
+}
+
+function drawCorrMatrix(mat, labels) {
+  var canvas = document.getElementById('cvCorr');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var n = labels.length;
+  var PAD_LEFT = 90, PAD_TOP = 30;
+  var cellW = Math.floor((W - PAD_LEFT) / n);
+  var cellH = Math.floor((H - PAD_TOP) / n);
+
+  function cellColour(r) {
+    if (r >= 0.9) return '#1a7f37';
+    if (r >= 0.7) return '#2ea043';
+    if (r >= 0.4) return '#3a5a1a';
+    if (r >= 0.1) return '#21262d';
+    if (r > -0.1) return '#21262d';
+    return '#7f1a1a';
+  }
+
+  for (var i = 0; i < n; i++) {
+    for (var j = 0; j < n; j++) {
+      var x = PAD_LEFT + j * cellW;
+      var y = PAD_TOP + i * cellH;
+      var r = mat[i][j];
+      ctx.fillStyle = cellColour(r);
+      ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+      ctx.fillStyle = Math.abs(r) > 0.3 ? '#e6edf3' : '#8b949e';
+      ctx.font = '11px Segoe UI,system-ui,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(r.toFixed(2), x + cellW/2, y + cellH/2);
+    }
+  }
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px Segoe UI,system-ui,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  labels.forEach(function(lbl, j) {
+    ctx.fillText(lbl, PAD_LEFT + j * cellW + cellW/2, PAD_TOP - 4);
+  });
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  labels.forEach(function(lbl, i) {
+    ctx.fillText(lbl, PAD_LEFT - 6, PAD_TOP + i * cellH + cellH/2);
+  });
+}
+
+// Quiz
+var answered = {};
+function answer(btn, correct, qid) {
+  if (answered[qid]) return;
+  answered[qid] = true;
+  var allOpts = btn.closest('.quiz-q').querySelectorAll('.opt');
+  allOpts.forEach(function(opt) { opt.style.pointerEvents = 'none'; });
+  if (correct) {
+    btn.classList.add('correct');
+    var fb = document.getElementById('fb-' + qid);
+    if (fb) fb.style.display = 'block';
+  } else {
+    btn.classList.add('wrong');
+  }
+}
+
+// Code snippets
+document.getElementById('code-tab2').textContent = [
+  'import numpy as np',
+  'from sklearn.linear_model import LinearRegression',
+  'from sklearn.metrics import r2_score',
+  '',
+  "features = ['servers','db_reads','storage_tb','api_calls','deploys']",
+  'X = np.array([[3,2,5,10,4],[3,3,5,12,5],[4,3,6,13,4],[4,4,6,15,6],',
+  '              [5,4,7,16,5],[5,5,7,18,7],[6,5,8,20,6],[6,6,8,22,8],',
+  '              [7,6,9,24,7],[7,7,9,26,9],[8,7,10,28,8],[8,8,10,30,10],',
+  '              [9,8,11,32,9],[9,9,11,34,11],[10,9,12,36,10],[10,10,12,38,12],',
+  '              [11,10,13,40,11],[11,11,13,42,13],[12,11,14,44,12],[12,12,14,46,14]])',
+  'y = np.array([2180,2530,2690,3150,3320,3780,4020,4350,4680,5020,',
+  '              5310,5650,5980,6300,6620,6950,7280,7620,7870,8250])',
+  '',
+  'model = LinearRegression().fit(X, y)',
+  'print(f"R2: {r2_score(y, model.predict(X)):.4f}")',
+  'for name, coef in zip(features, model.coef_):',
+  '    print(f"  {name}: {coef:.1f}")',
+  'print(f"  intercept: {model.intercept_:.1f}")'
+].join('\n');
+
+document.getElementById('code-tab3').textContent = [
+  'import numpy as np',
+  'from sklearn.linear_model import LinearRegression',
+  'from sklearn.preprocessing import StandardScaler',
+  '',
+  '# Standardise to compare importance fairly',
+  'scaler = StandardScaler()',
+  'X_scaled = scaler.fit_transform(X)',
+  'model_s = LinearRegression().fit(X_scaled, y)',
+  '',
+  'print("Feature importance (standardised coefficients):")',
+  'for name, coef in sorted(zip(features, model_s.coef_), key=lambda x: -abs(x[1])):',
+  '    bar = chr(0x2588) * int(abs(coef)/100)',
+  '    print(f"  {name:15s}: {coef:7.1f}  {bar}")'
+].join('\n');
+
+document.getElementById('code-tab4').textContent = [
+  'import numpy as np',
+  '',
+  "cols = features + ['bill']",
+  'data = np.column_stack([X, y])',
+  '',
+  'print("Pearson correlations with bill:")',
+  'for i, name in enumerate(features):',
+  '    r = np.corrcoef(data[:,i], data[:,5])[0,1]',
+  '    print(f"  {name:15s}: {r:.3f}")'
+].join('\n');
+
+// Initialise Tab 2
+updateFeatures();
+</script>
+
 </body>
 </html>

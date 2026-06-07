@@ -6,30 +6,860 @@
 <title>Phase 2 Week 2 — Overfitting Arena</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .coming { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:48px; text-align:center; max-width:520px; }
-  h1 { font-size:2rem; margin-bottom:12px; }
-  p { color:#8b949e; line-height:1.8; margin-bottom:20px; }
-  a { color:#ff9944; text-decoration:none; }
-  .tag { display:inline-block; background:#21262d; border-radius:4px; padding:3px 10px; font-size:0.78rem; color:#8b949e; margin:4px; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; min-height:100vh; }
+  header { background:#161b22; border-bottom:1px solid #30363d; padding:16px 40px; display:flex; align-items:center; gap:16px; }
+  header a { color:#ff7b72; text-decoration:none; font-size:0.9rem; }
+  header h1 { font-size:1.4rem; }
+  .badge { background:#3a0000; color:#ff7b72; padding:3px 10px; border-radius:12px; font-size:0.75rem; border:1px solid #ff7b7244; }
+  .tabs { display:flex; gap:4px; padding:0 40px; background:#161b22; border-bottom:1px solid #30363d; }
+  .tab { padding:14px 22px; cursor:pointer; font-size:0.9rem; border-bottom:3px solid transparent; color:#8b949e; transition:all 0.2s; }
+  .tab:hover { color:#e6edf3; }
+  .tab.active { color:#ff7b72; border-bottom-color:#ff7b72; }
+  .panel { display:none; padding:36px 40px; max-width:960px; margin:0 auto; }
+  .panel.active { display:block; }
+  h2 { font-size:1.4rem; margin-bottom:8px; }
+  .hook { background:#2a0000; border:1px solid #ff7b7255; border-radius:10px; padding:16px 20px; margin-bottom:24px; }
+  .hook-label { font-size:0.75rem; color:#ff7b72; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .hook p { font-size:0.95rem; color:#e6edf3; line-height:1.7; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:24px; margin-bottom:20px; }
+  .card h3 { font-size:1rem; margin-bottom:14px; color:#ff7b72; }
+  canvas { border-radius:8px; display:block; }
+  button { padding:10px 22px; border-radius:8px; cursor:pointer; font-size:0.88rem; font-weight:700; border:1px solid #900000; background:#600000; color:#fff; transition:background 0.2s; margin:4px; }
+  button:hover { background:#900000; }
+  button.green { background:#238636; border-color:#2ea043; }
+  button.green:hover { background:#2ea043; }
+  button.secondary { background:#21262d; border-color:#30363d; color:#e6edf3; }
+  button.secondary:hover { background:#30363d; }
+  button.active-btn { background:#1f6feb; border-color:#388bfd; }
+  .stat-row { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+  .stat { background:#21262d; border-radius:6px; padding:10px 16px; font-size:0.85rem; }
+  .stat span { font-size:1.2rem; font-weight:800; font-family:monospace; display:block; }
+  .result-box { background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:14px 16px; font-family:monospace; font-size:0.86rem; line-height:1.9; margin-top:14px; }
+  .green { color:#3fb950; } .red { color:#ff7b72; } .yellow { color:#d29922; } .orange { color:#ff9944; } .blue { color:#58a6ff; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .info-box { border-radius:8px; padding:14px 16px; font-size:0.85rem; line-height:1.8; margin:14px 0; }
+  .info-blue { background:#1f3a5f22; border:1px solid #1f6feb; color:#8b949e; }
+  .info-green { background:#1a3a1a; border:1px solid #2ea043; color:#8b949e; }
+  .info-orange { background:#2a1a00; border:1px solid #ff994455; color:#8b949e; }
+  .info-red { background:#2a000022; border:1px solid #ff7b7255; color:#8b949e; }
+  .quiz-q { background:#1f3a5f22; border:1px solid #1f6feb; border-radius:8px; padding:16px; margin:14px 0; }
+  .opt { display:block; width:100%; text-align:left; margin:6px 0; padding:10px 14px; background:#21262d; border:1px solid #30363d; border-radius:6px; cursor:pointer; color:#e6edf3; transition:all 0.2s; }
+  .opt:hover { border-color:#ff7b72; color:#ff7b72; }
+  .opt.correct { background:#1a7f37; border-color:#2ea043; color:#3fb950; }
+  .opt.wrong { background:#da363322; border-color:#f85149; color:#ff7b72; }
+  .celebrate { background:#1a7f3722; border:1px solid #2ea043; border-radius:8px; padding:16px; margin-top:14px; display:none; color:#3fb950; font-size:0.9rem; }
+  table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  th { background:#21262d; padding:8px 12px; text-align:left; color:#8b949e; }
+  td { padding:8px 12px; border-bottom:1px solid #21262d; font-family:monospace; }
+  @media(max-width:640px){
+    .two-col { grid-template-columns:1fr; }
+    .panel { padding: 16px 12px; }
+    header { padding: 12px 16px; gap: 8px; }
+    header h1 { font-size: 1.2rem; }
+    .tabs { padding: 0; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
+    .tab { padding: 12px 14px; font-size: 0.82rem; flex-shrink: 0; }
+    canvas { width: 100% !important; }
+    button { padding: 8px 14px; font-size: 0.82rem; }
+  }
 </style>
 </head>
 <body>
-<div class="coming">
-  <div style="font-size:3rem;margin-bottom:16px;">🎯</div>
-  <h1>Overfitting Arena</h1>
-  <p>Coming next. This week you'll see why a model that's "too good" on training data fails on new data — and learn how to detect and fix it.</p>
-  <div>
-    <span class="tag">Train/Test Split</span>
-    <span class="tag">Overfitting</span>
-    <span class="tag">Underfitting</span>
-    <span class="tag">R² Score</span>
-    <span class="tag">Cross-Validation</span>
-  </div>
-  <br>
+
+<header>
   <a href="../../index.html">← Back to Arena</a>
-  &nbsp;·&nbsp;
-  <a href="../week1/index.html">← Week 1: Linear Regression</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Phase 2 · Week 2</div>
+    <h1>🎯 Overfitting Arena</h1>
+  </div>
+  <span class="badge">Train vs Test</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('what')">📖 What is it?</div>
+  <div class="tab" onclick="switchTab('split')">✂️ Split the Data</div>
+  <div class="tab" onclick="switchTab('dial')">📈 Complexity Dial</div>
+  <div class="tab" onclick="switchTab('cv')">🔁 Cross-Validation</div>
+  <div class="tab" onclick="switchTab('quiz')">🎓 Quiz</div>
 </div>
+
+<!-- ===== TAB 1: WHAT IS IT ===== -->
+<div id="panel-what" class="panel active">
+  <h2>🎯 What is Overfitting?</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 In plain English</div>
+    <p>Your model studied the training data too hard — it memorised the answers instead of learning the pattern. It aces every training question but fails on anything new.</p>
+  </div>
+
+  <div class="card">
+    <h3>The CloudSync Story</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:16px;">
+      CloudSync trained a cost model on months January through August. On training data it scored
+      <strong style="color:#3fb950">R² = 0.99</strong> — almost perfect. Then September arrived.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d;">
+        <div style="font-size:0.75rem;color:#3fb950;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Training (Jan – Aug)</div>
+        <div style="font-size:1.6rem;font-weight:800;color:#3fb950;font-family:monospace;">R² = 0.99</div>
+        <p style="font-size:0.82rem;color:#8b949e;margin-top:6px;line-height:1.6;">Model fits perfectly. Passes every historical data point with tiny error.</p>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #21262d;">
+        <div style="font-size:0.75rem;color:#ff7b72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">September (unseen)</div>
+        <div style="font-family:monospace;font-size:0.9rem;margin-bottom:6px;">Predicted: <span style="color:#d29922">$2,100</span></div>
+        <div style="font-family:monospace;font-size:0.9rem;margin-bottom:6px;">Actual: <span style="color:#ff7b72">$3,580</span></div>
+        <div style="font-size:0.82rem;color:#ff7b72;font-weight:700;">Off by 70% 🔥</div>
+      </div>
+    </div>
+    <div class="info-box info-red" style="margin-top:16px;margin-bottom:0;">
+      <strong style="color:#ff7b72">Why?</strong> The model memorised the shape of the first 8 months' noise instead of learning that bills grow over time. It had no idea what to do when a new month appeared.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Two Failure Modes</h3>
+    <div class="two-col">
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #ff7b7244;">
+        <div style="font-size:0.75rem;color:#ff7b72;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Overfitting — Too Complex</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+          The model is <strong style="color:#e6edf3">too wiggly</strong>. It memorises every bump and quirk in the training data, including random noise.
+          <br><br>
+          <strong style="color:#ff7b72">Signal:</strong> Train R² near 1.0, Test R² much lower.
+        </p>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:16px;border:1px solid #1f6feb44;">
+        <div style="font-size:0.75rem;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Underfitting — Too Simple</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+          The model is <strong style="color:#e6edf3">too rigid</strong>. A straight line trying to fit a curved trend misses the pattern entirely.
+          <br><br>
+          <strong style="color:#58a6ff">Signal:</strong> Both Train R² and Test R² are low.
+        </p>
+      </div>
+    </div>
+    <div style="background:#0d1117;border-radius:8px;padding:14px;margin-top:16px;border:1px solid #21262d;">
+      <div style="font-size:0.75rem;color:#3fb950;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">The Sweet Spot — Just Right</div>
+      <p style="font-size:0.85rem;color:#8b949e;line-height:1.8;">
+        Train R² and Test R² are both high <em>and close together</em>. The model learned the real pattern, not the noise.
+      </p>
+    </div>
+  </div>
+
+  <div class="info-box info-orange">
+    <strong style="color:#ff9944">Engineering analogy:</strong> Like caching API responses too aggressively — 100% hit rate on known traffic patterns, 0% on new requests you haven't seen before. You need a cache policy, not a cache dump.
+  </div>
+
+  <div class="card">
+    <h3>From Week 1 to Week 2</h3>
+    <div class="info-box info-blue" style="margin-bottom:0;">
+      <strong style="color:#58a6ff">From Week 1</strong> you know gradient descent adjusts weights to minimise loss on training data. Now the question is: what if it fits the training data <em>too</em> well? It's not wrong — it's doing exactly what you asked. The problem is you didn't hold back a test set to check whether it generalised.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Fix: Always Hold Back Test Data</h3>
+    <div style="background:#0d1117;border-radius:8px;padding:16px;font-family:monospace;font-size:0.88rem;line-height:2.2;border:1px solid #21262d;">
+      <span style="color:#8b949e"># Split your data BEFORE training. Never touch the test set.</span><br>
+      <span style="color:#3fb950">Training set</span> <span style="color:#8b949e">→ model learns from this</span><br>
+      <span style="color:#ff7b72">Test set &nbsp;&nbsp;&nbsp;</span> <span style="color:#8b949e">→ never seen during training — measures real performance</span><br><br>
+      <span style="color:#8b949e"># Rule of thumb: 80% train / 20% test</span><br>
+      <span style="color:#8b949e"># Or: train on months 1–8, test on months 9–12</span>
+    </div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="green" onclick="switchTab('split')">✂️ Split the Data →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: SPLIT THE DATA ===== -->
+<div id="panel-split" class="panel">
+  <h2>✂️ Split the Data</h2>
+
+  <div class="hook">
+    <div class="hook-label">🎯 Your challenge</div>
+    <p>Move the split to choose how many months train the model. Watch train R² and test R² — the gap between them is your overfitting signal.</p>
+  </div>
+
+  <div class="card">
+    <canvas id="split-canvas" width="860" height="320"></canvas>
+    <div style="margin-top:18px;">
+      <label style="font-size:0.85rem;color:#8b949e;">
+        Training months: <strong id="split-display" style="color:#ff7b72;">8</strong>
+        <span style="color:#8b949e;font-size:0.8rem;"> (months 1–<span id="split-n">8</span> train, <span id="split-test-range">9–12</span> test)</span>
+      </label><br>
+      <input type="range" id="split-slider" min="3" max="10" step="1" value="8"
+             oninput="updateSplit()" style="width:100%;accent-color:#ff7b72;margin-top:8px;">
+    </div>
+    <div class="stat-row" id="split-stats"></div>
+    <div id="split-msg" class="result-box" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>What to Look For</h3>
+    <div class="two-col">
+      <div style="background:#0d1117;border-radius:8px;padding:14px;">
+        <div style="font-size:0.75rem;color:#ff7b72;margin-bottom:6px;font-weight:700;">⚠️ Large gap = overfitting</div>
+        <p style="font-size:0.82rem;color:#8b949e;line-height:1.8;">
+          If train R² ≈ 0.99 but test R² ≈ 0.40, the model memorised rather than learned. Adding more training data usually helps.
+        </p>
+      </div>
+      <div style="background:#0d1117;border-radius:8px;padding:14px;">
+        <div style="font-size:0.75rem;color:#3fb950;margin-bottom:6px;font-weight:700;">✅ Small gap = generalising</div>
+        <p style="font-size:0.82rem;color:#8b949e;line-height:1.8;">
+          If train R² and test R² are both high and close, the model learned the real pattern and will work on new months.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python: Train/Test Split</h3>
+    <pre id="code-split" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-split','btn-split')" title="Click to copy"></pre>
+    <button id="btn-split" class="secondary" onclick="copyCode('code-split','btn-split')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 3: COMPLEXITY DIAL ===== -->
+<div id="panel-dial" class="panel">
+  <h2>📈 Complexity Dial</h2>
+
+  <div class="hook">
+    <div class="hook-label">🎮 Main game</div>
+    <p>Each number is the polynomial degree — how wiggly the curve is allowed to be. Crank it up and watch it memorise training noise. Your goal: find the degree that minimises test MSE.</p>
+  </div>
+
+  <div class="card">
+    <canvas id="dial-canvas" width="860" height="320"></canvas>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+      <span style="font-size:0.85rem;color:#8b949e;">Degree:</span>
+      <button id="deg-btn-1" onclick="setDegree(1)" class="active-btn">1</button>
+      <button id="deg-btn-2" onclick="setDegree(2)">2</button>
+      <button id="deg-btn-3" onclick="setDegree(3)">3</button>
+      <button id="deg-btn-4" onclick="setDegree(4)">4</button>
+      <button id="deg-btn-5" onclick="setDegree(5)">5</button>
+      <button id="deg-btn-6" onclick="setDegree(6)">6</button>
+      <button id="deg-btn-7" onclick="setDegree(7)">7</button>
+    </div>
+    <div class="stat-row" id="dial-stats"></div>
+    <div id="dial-msg" class="result-box" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Rule of Thumb</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+      Start simple (degree 1), go up until test MSE stops improving. Once test MSE starts rising again — even if train MSE keeps falling — you've crossed into overfitting territory. That inflection point is your sweet spot.
+    </p>
+    <div style="margin-top:14px;">
+      <table>
+        <thead><tr><th>Degree</th><th>Name</th><th>Shape</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Linear</td><td>Straight line</td><td>Underfitting if data curves</td></tr>
+          <tr><td>2</td><td>Quadratic</td><td>One curve</td><td>Usually safe</td></tr>
+          <tr><td>3–4</td><td>Cubic / Quartic</td><td>S-shapes, humps</td><td>Mild overfit risk</td></tr>
+          <tr><td>5+</td><td>High-degree poly</td><td>Wild oscillations</td><td>Strong overfit on small data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python: Polynomial Degrees</h3>
+    <pre id="code-dial" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-dial','btn-dial')" title="Click to copy"></pre>
+    <button id="btn-dial" class="secondary" onclick="copyCode('code-dial','btn-dial')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 4: CROSS-VALIDATION ===== -->
+<div id="panel-cv" class="panel">
+  <h2>🔁 Cross-Validation</h2>
+
+  <div class="hook">
+    <div class="hook-label">💡 In plain English</div>
+    <p>One split can be unlucky. Cross-validation rotates the test window — every month gets a turn as the test set. The average is far more reliable than any single split.</p>
+  </div>
+
+  <div class="card">
+    <canvas id="cv-canvas" width="860" height="200"></canvas>
+    <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <span style="font-size:0.85rem;color:#8b949e;">Active fold:</span>
+      <button id="fold-btn-1" onclick="setFold(1)" class="active-btn">Fold 1</button>
+      <button id="fold-btn-2" onclick="setFold(2)">Fold 2</button>
+      <button id="fold-btn-3" onclick="setFold(3)">Fold 3</button>
+      <button id="fold-btn-4" onclick="setFold(4)">Fold 4</button>
+    </div>
+    <div class="stat-row" id="cv-stats"></div>
+    <div id="cv-msg" class="result-box" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Why One Split Isn't Enough</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+      If you always test on months 9–12, your reported score depends heavily on whether those months are "easy" or "hard". Cross-validation fixes this by averaging scores across every possible test window.
+    </p>
+    <div class="info-box info-green">
+      <strong style="color:#3fb950">sklearn one-liner:</strong> <code style="color:#e6edf3;">cross_val_score(model, X, y, cv=4)</code> does all 4 folds automatically and returns an array of R² scores. Take the mean.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Python: Cross-Validation</h3>
+    <pre id="code-cv" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-cv','btn-cv')" title="Click to copy"></pre>
+    <button id="btn-cv" class="secondary" onclick="copyCode('code-cv','btn-cv')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- ===== TAB 5: QUIZ ===== -->
+<div id="panel-quiz" class="panel">
+  <h2>🎓 Quick Check</h2>
+  <div class="hook">
+    <div class="hook-label">3 questions</div>
+    <p>Answer these to confirm Week 2 concepts are solid before moving on.</p>
+  </div>
+  <div id="quiz-body"></div>
+  <div id="quiz-result" style="display:none;"></div>
+</div>
+
+<script>
+// ============ DATA ============
+const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
+const BILLS  = [1200,1380,1550,1820,2080,2350,2720,3100,3580,4150,4820,5500];
+const DEFAULT_SPLIT = 8;
+
+// ============ TAB LOGIC ============
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['what','split','dial','cv','quiz'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'split') setTimeout(() => updateSplit(), 80);
+  if (name === 'dial') setTimeout(() => setDegree(currentDegree), 80);
+  if (name === 'cv') setTimeout(() => setFold(currentFold), 80);
+  if (name === 'quiz') renderQuiz();
+}
+
+// ============ POLYNOMIAL REGRESSION ============
+function gaussianElim(A, b) {
+  const n = b.length;
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let col = 0; col < n; col++) {
+    let maxRow = col;
+    for (let r = col + 1; r < n; r++)
+      if (Math.abs(M[r][col]) > Math.abs(M[maxRow][col])) maxRow = r;
+    [M[col], M[maxRow]] = [M[maxRow], M[col]];
+    if (Math.abs(M[col][col]) < 1e-10) return Array(n).fill(0);
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = M[r][col] / M[col][col];
+      for (let k = col; k <= n; k++) M[r][k] -= f * M[col][k];
+    }
+  }
+  return M.map((row, i) => row[n] / row[i]);
+}
+
+function normX(x) { return 2 * (x - 1) / (12 - 1) - 1; }
+
+function polyFit(xTrain, yTrain, deg) {
+  const n = deg + 1;
+  const xn = xTrain.map(normX);
+  const X = xn.map(x => Array.from({length: n}, (_, j) => Math.pow(x, j)));
+  const XtX = Array.from({length: n}, (_, i) => Array.from({length: n}, (_, j) =>
+    X.reduce((s, row) => s + row[i] * row[j], 0)));
+  const Xty = Array.from({length: n}, (_, i) => X.reduce((s, row, k) => s + row[i] * yTrain[k], 0));
+  return gaussianElim(XtX, Xty);
+}
+
+function polyEval(coeffs, x) {
+  const xn = normX(x);
+  return coeffs.reduce((s, c, j) => s + c * Math.pow(xn, j), 0);
+}
+
+function mse(yTrue, yPred) {
+  return yTrue.reduce((s, y, i) => s + (y - yPred[i]) ** 2, 0) / yTrue.length;
+}
+
+function r2(yTrue, yPred) {
+  const mean = yTrue.reduce((a, b) => a + b) / yTrue.length;
+  const ss_tot = yTrue.reduce((s, y) => s + (y - mean) ** 2, 0);
+  const ss_res = yTrue.reduce((s, y, i) => s + (y - yPred[i]) ** 2, 0);
+  return 1 - ss_res / ss_tot;
+}
+
+// ============ CANVAS HELPERS ============
+// Padding: l:60, r:20, t:20, b:45
+// X range: months 1–12 | Y range: 0–6500
+
+function drawBg(ctx, W, H) {
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+}
+
+function toSx(m, W, padL, padR) {
+  return padL + (m - 1) / (12 - 1) * (W - padL - padR);
+}
+
+function toSy(bill, H, padT, padB) {
+  return H - padB - bill / 6500 * (H - padT - padB);
+}
+
+function drawGrid(ctx, W, H, pl, pr, pt, pb) {
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  // horizontal grid lines every $1000
+  for (let b = 0; b <= 6000; b += 1000) {
+    const sy = toSy(b, H, pt, pb);
+    ctx.beginPath(); ctx.moveTo(pl, sy); ctx.lineTo(W - pr, sy); ctx.stroke();
+    ctx.fillStyle = '#484f58'; ctx.font = '11px monospace'; ctx.textAlign = 'right';
+    ctx.fillText('$' + b, pl - 6, sy + 4);
+  }
+  // x axis labels M1–M12
+  ctx.textAlign = 'center';
+  for (let m = 1; m <= 12; m++) {
+    const sx = toSx(m, W, pl, pr);
+    ctx.fillText('M' + m, sx, H - pb + 16);
+  }
+  // axes
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pl, pt); ctx.lineTo(pl, H - pb); ctx.lineTo(W - pr, H - pb);
+  ctx.stroke();
+  // axis labels
+  ctx.fillStyle = '#8b949e'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Month', pl + (W - pl - pr) / 2, H - 4);
+  ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Monthly Bill ($)', 0, 0); ctx.restore();
+}
+
+function drawSplitLine(ctx, W, H, pl, pr, pt, pb, splitN, color) {
+  // vertical dashed line after month splitN
+  const sx = (toSx(splitN, W, pl, pr) + toSx(splitN + 1, W, pl, pr)) / 2;
+  ctx.save();
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = color || '#8b949e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(sx, pt); ctx.lineTo(sx, H - pb);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // label
+  ctx.fillStyle = color || '#8b949e';
+  ctx.font = '11px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('split', sx, pt + 12);
+  ctx.restore();
+}
+
+function drawPoints(ctx, W, H, pl, pr, pt, pb, idxSet, color, radius) {
+  radius = radius || 6;
+  idxSet.forEach(i => {
+    const sx = toSx(MONTHS[i], W, pl, pr);
+    const sy = toSy(BILLS[i], H, pt, pb);
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0d1117'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+function drawCurve(ctx, W, H, pl, pr, pt, pb, coeffs, color) {
+  ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+  const steps = 200;
+  for (let i = 0; i <= steps; i++) {
+    const m = 1 + (i / steps) * 11;
+    const sx = toSx(m, W, pl, pr);
+    const sy = toSy(polyEval(coeffs, m), H, pt, pb);
+    if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+}
+
+// ============ TAB 2: SPLIT ============
+function updateSplit() {
+  const n = parseInt(document.getElementById('split-slider').value);
+  document.getElementById('split-display').textContent = n;
+  document.getElementById('split-n').textContent = n;
+  const testStart = n + 1;
+  document.getElementById('split-test-range').textContent = testStart + (n < 12 ? '–12' : '');
+
+  const c = document.getElementById('split-canvas');
+  const W = c.offsetWidth || 860;
+  c.width = W; c.height = 320;
+  const ctx = c.getContext('2d');
+  const pl = 60, pr = 20, pt = 20, pb = 45;
+
+  drawBg(ctx, W, 320);
+  drawGrid(ctx, W, 320, pl, pr, pt, pb);
+
+  const trainIdx = MONTHS.slice(0, n).map((_, i) => i);
+  const testIdx  = MONTHS.slice(n).map((_, i) => n + i);
+
+  // Fit degree-1 on training set
+  const xTrain = trainIdx.map(i => MONTHS[i]);
+  const yTrain = trainIdx.map(i => BILLS[i]);
+  const coeffs = polyFit(xTrain, yTrain, 1);
+
+  // draw curve across all 12 months
+  drawCurve(ctx, W, 320, pl, pr, pt, pb, coeffs, '#ff7b7288');
+  drawSplitLine(ctx, W, 320, pl, pr, pt, pb, n, '#8b949e');
+  drawPoints(ctx, W, 320, pl, pr, pt, pb, trainIdx, '#58a6ff', 7);
+  drawPoints(ctx, W, 320, pl, pr, pt, pb, testIdx, '#ff7b72', 7);
+
+  // Legend
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#58a6ff'; ctx.fillText('● Train', pl + 8, pt + 16);
+  ctx.fillStyle = '#ff7b72'; ctx.fillText('● Test', pl + 64, pt + 16);
+
+  // Compute stats
+  const trainPred = xTrain.map(m => polyEval(coeffs, m));
+  const trainR2 = r2(yTrain, trainPred);
+  const testPred = testIdx.map(i => polyEval(coeffs, MONTHS[i]));
+  const testR2 = testIdx.length >= 2 ? r2(testIdx.map(i => BILLS[i]), testPred) : null;
+  const gap = testR2 !== null ? Math.abs(trainR2 - testR2) : null;
+
+  let gapColor = '#3fb950', gapLabel = '';
+  if (gap !== null) {
+    if (gap < 0.05) { gapColor = '#3fb950'; gapLabel = '✅ Small gap — good generalisation'; }
+    else if (gap < 0.2) { gapColor = '#d29922'; gapLabel = '⚠️ Moderate gap'; }
+    else { gapColor = '#ff7b72'; gapLabel = '🔥 Large gap — overfitting signal'; }
+  }
+
+  document.getElementById('split-stats').innerHTML =
+    '<div class="stat">Train R²: <span style="color:#3fb950;">' + trainR2.toFixed(3) + '</span></div>' +
+    (testR2 !== null
+      ? '<div class="stat">Test R²: <span style="color:' + (testR2 > 0.8 ? '#3fb950' : testR2 > 0.5 ? '#d29922' : '#ff7b72') + ';">' + testR2.toFixed(3) + '</span></div>' +
+        '<div class="stat">Gap: <span style="color:' + gapColor + ';">' + gap.toFixed(3) + '</span></div>'
+      : '<div class="stat">Test: <span style="color:#8b949e;">N/A (need ≥2 test pts)</span></div>');
+
+  document.getElementById('split-msg').innerHTML =
+    '<span style="color:' + gapColor + ';">' + (gap !== null ? gapLabel : 'Not enough test points.') + '</span>' +
+    (testR2 !== null && n <= 5
+      ? '\n<span class="yellow">Low training data — model may not capture the full trend.</span>'
+      : '');
+}
+
+// ============ TAB 3: COMPLEXITY DIAL ============
+let currentDegree = 1;
+
+function setDegree(deg) {
+  currentDegree = deg;
+  for (let d = 1; d <= 7; d++) {
+    const btn = document.getElementById('deg-btn-' + d);
+    btn.className = d === deg ? 'active-btn' : '';
+  }
+
+  const n = DEFAULT_SPLIT; // 8
+  const trainIdx = MONTHS.slice(0, n).map((_, i) => i);
+  const testIdx  = MONTHS.slice(n).map((_, i) => n + i);
+  const xTrain = trainIdx.map(i => MONTHS[i]);
+  const yTrain = trainIdx.map(i => BILLS[i]);
+
+  const coeffs = polyFit(xTrain, yTrain, deg);
+
+  const trainPred = xTrain.map(m => polyEval(coeffs, m));
+  const testPred  = testIdx.map(i => polyEval(coeffs, MONTHS[i]));
+  const trainMSE  = mse(yTrain, trainPred);
+  const testMSE   = mse(testIdx.map(i => BILLS[i]), testPred);
+
+  const c = document.getElementById('dial-canvas');
+  const W = c.offsetWidth || 860;
+  c.width = W; c.height = 320;
+  const ctx = c.getContext('2d');
+  const pl = 60, pr = 20, pt = 20, pb = 45;
+
+  drawBg(ctx, W, 320);
+  drawGrid(ctx, W, 320, pl, pr, pt, pb);
+  drawCurve(ctx, W, 320, pl, pr, pt, pb, coeffs, '#ff7b72');
+  drawSplitLine(ctx, W, 320, pl, pr, pt, pb, n, '#8b949e');
+  drawPoints(ctx, W, 320, pl, pr, pt, pb, trainIdx, '#58a6ff', 7);
+  drawPoints(ctx, W, 320, pl, pr, pt, pb, testIdx, '#ff7b72', 7);
+
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#58a6ff'; ctx.fillText('● Train', pl + 8, pt + 16);
+  ctx.fillStyle = '#ff7b72'; ctx.fillText('● Test', pl + 64, pt + 16);
+
+  let verdict, verdictColor;
+  const ratio = testMSE / Math.max(1, trainMSE);
+  if (ratio < 2 && testMSE < 100000)       { verdict = 'Good fit ✅';          verdictColor = '#3fb950'; }
+  else if (ratio < 5 && testMSE < 400000)  { verdict = 'Mild overfit';         verdictColor = '#d29922'; }
+  else if (ratio < 20)                     { verdict = 'Overfitting ⚠️';       verdictColor = '#ff9944'; }
+  else                                     { verdict = 'Severe overfit 🔥';    verdictColor = '#ff7b72'; }
+
+  document.getElementById('dial-stats').innerHTML =
+    '<div class="stat">Degree: <span style="color:#ff7b72;">' + deg + '</span></div>' +
+    '<div class="stat">Train MSE: <span style="color:#3fb950;">' + Math.round(trainMSE).toLocaleString() + '</span></div>' +
+    '<div class="stat">Test MSE: <span style="color:' + verdictColor + ';">' + Math.round(testMSE).toLocaleString() + '</span></div>' +
+    '<div class="stat">Verdict: <span style="color:' + verdictColor + ';">' + verdict + '</span></div>';
+
+  document.getElementById('dial-msg').innerHTML =
+    'Degree ' + deg + ': train MSE = <span class="green">' + Math.round(trainMSE).toLocaleString() + '</span>  ' +
+    'test MSE = <span style="color:' + verdictColor + ';">' + Math.round(testMSE).toLocaleString() + '</span>  ' +
+    'ratio = <span style="color:' + verdictColor + ';">' + ratio.toFixed(1) + 'x</span>\n' +
+    '<span style="color:' + verdictColor + ';">' + verdict + '</span>';
+}
+
+// ============ TAB 4: CROSS-VALIDATION ============
+let currentFold = 1;
+
+// 4 folds on 12 months: each fold = 3 months
+// Fold 1: test months 10-12 (idx 9-11), train = rest
+// Fold 2: test months 7-9  (idx 6-8),  train = rest
+// Fold 3: test months 4-6  (idx 3-5),  train = rest
+// Fold 4: test months 1-3  (idx 0-2),  train = rest
+const CV_FOLDS = [
+  { testIdx: [9, 10, 11], label: 'Months 10–12' },
+  { testIdx: [6,  7,  8], label: 'Months 7–9'  },
+  { testIdx: [3,  4,  5], label: 'Months 4–6'  },
+  { testIdx: [0,  1,  2], label: 'Months 1–3'  },
+];
+
+const FOLD_COLORS = ['#ff7b72', '#ff9944', '#d29922', '#58a6ff'];
+
+function computeFoldR2(foldIndex) {
+  const { testIdx } = CV_FOLDS[foldIndex];
+  const trainIdx = MONTHS.map((_, i) => i).filter(i => !testIdx.includes(i));
+  const xTrain = trainIdx.map(i => MONTHS[i]);
+  const yTrain = trainIdx.map(i => BILLS[i]);
+  const coeffs = polyFit(xTrain, yTrain, 2);
+  const testPred = testIdx.map(i => polyEval(coeffs, MONTHS[i]));
+  return r2(testIdx.map(i => BILLS[i]), testPred);
+}
+
+function setFold(fold) {
+  currentFold = fold;
+  for (let f = 1; f <= 4; f++) {
+    const btn = document.getElementById('fold-btn-' + f);
+    btn.className = f === fold ? 'active-btn' : '';
+  }
+
+  const c = document.getElementById('cv-canvas');
+  const W = c.offsetWidth || 860;
+  c.width = W; c.height = 200;
+  const ctx = c.getContext('2d');
+  const pl = 60, pr = 20, pt = 30, pb = 30;
+
+  drawBg(ctx, W, 200);
+
+  const bandH = 40, bandY = 60;
+  const totalW = W - pl - pr;
+
+  // Draw 4 folds as bands
+  for (let f = 0; f < 4; f++) {
+    const { testIdx } = CV_FOLDS[f];
+    const minM = MONTHS[testIdx[0]];
+    const maxM = MONTHS[testIdx[testIdx.length - 1]];
+    const bx = pl + (minM - 1) / 11 * totalW;
+    const bw = (maxM - minM + 1) / 11 * totalW;
+    const isActive = (f + 1) === fold;
+
+    ctx.fillStyle = isActive ? FOLD_COLORS[f] + '99' : '#21262d';
+    ctx.strokeStyle = isActive ? FOLD_COLORS[f] : '#484f58';
+    ctx.lineWidth = isActive ? 2 : 1;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(bx, bandY, bw - 2, bandH, 4);
+    } else {
+      ctx.rect(bx, bandY, bw - 2, bandH);
+    }
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = isActive ? '#e6edf3' : '#8b949e';
+    ctx.font = isActive ? 'bold 12px sans-serif' : '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Fold ' + (f + 1), bx + (bw - 2) / 2, bandY + 15);
+    ctx.font = '10px monospace';
+    ctx.fillStyle = isActive ? '#e6edf3' : '#484f58';
+    ctx.fillText('M' + (MONTHS[testIdx[0]]) + '–M' + (MONTHS[testIdx[testIdx.length - 1]]), bx + (bw - 2) / 2, bandY + 31);
+  }
+
+  // Month ruler
+  ctx.fillStyle = '#484f58'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  for (let m = 1; m <= 12; m++) {
+    const sx = pl + (m - 1) / 11 * totalW;
+    ctx.fillText('M' + m, sx, bandY + bandH + 20);
+  }
+
+  // Labels
+  ctx.fillStyle = '#58a6ff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('■ Training fold', pl, pt - 4);
+  ctx.fillStyle = FOLD_COLORS[fold - 1];
+  ctx.fillText('■ Test fold (active)', pl + 120, pt - 4);
+
+  // Compute scores for all folds
+  const scores = CV_FOLDS.map((_, i) => computeFoldR2(i));
+  const avgScore = scores.reduce((a, b) => a + b) / scores.length;
+
+  let statsHtml = '';
+  scores.forEach((s, i) => {
+    statsHtml += '<div class="stat">Fold ' + (i + 1) + ': <span style="color:' +
+      FOLD_COLORS[i] + ';">' + s.toFixed(3) + '</span></div>';
+  });
+  statsHtml += '<div class="stat">Avg CV R²: <span style="color:#3fb950;font-size:1.3rem;">' + avgScore.toFixed(3) + '</span></div>';
+  document.getElementById('cv-stats').innerHTML = statsHtml;
+
+  const activeScore = scores[fold - 1];
+  document.getElementById('cv-msg').innerHTML =
+    'Active fold ' + fold + ' (' + CV_FOLDS[fold - 1].label + '): R² = <span style="color:' + FOLD_COLORS[fold - 1] + ';">' + activeScore.toFixed(3) + '</span>\n' +
+    'Average across all 4 folds: R² = <span class="green">' + avgScore.toFixed(3) + '</span>\n' +
+    'Using the average gives a <span class="blue">more reliable estimate</span> than any single split.';
+}
+
+// ============ QUIZ ============
+const QUIZ = [
+  {
+    q: 'Train R² = 0.99, Test R² = 0.41. What does this mean?',
+    opts: [
+      ['The model is excellent — 99% accuracy on training data is very impressive', false],
+      ['The model is overfitting — it memorised training data but fails on unseen months', true],
+      ['The model is underfitting — both scores should be higher', false],
+    ],
+    exp: 'The giant gap between train R² (0.99) and test R² (0.41) is the signature of overfitting. The model memorised the training months instead of learning the underlying trend. A well-generalising model would have both scores close together.'
+  },
+  {
+    q: 'What is the main benefit of cross-validation over a single train/test split?',
+    opts: [
+      ['It trains the model faster by using less data each round', false],
+      ['It averages out lucky or unlucky test windows — every month gets a turn as test data', true],
+      ['It always gives a higher R² score than a single split', false],
+    ],
+    exp: 'A single split can be misleading — if your test months happen to be "easy" your score is inflated; if they are "hard" it is deflated. Cross-validation rotates the test window so each observation is tested exactly once, and the average score is far more reliable.'
+  },
+  {
+    q: 'Degree 1: train MSE = 52,000, test MSE = 58,000. Degree 6: train MSE = 800, test MSE = 4,200,000. Which do you deploy?',
+    opts: [
+      ['Degree 6 — the training MSE is much lower so it learned the data better', false],
+      ['Degree 1 — train and test MSE are close, meaning it generalises well to unseen months', true],
+      ['Neither — you need to train more epochs first', false],
+    ],
+    exp: 'Degree 6 has massively lower training error but catastrophically higher test error — a 5000x ratio. That is severe overfitting. Degree 1 has a train/test ratio of about 1.1x, meaning it generalises well. Always choose the model with the best test performance, not best training performance.'
+  },
+];
+
+let quizDone = new Set(), quizScore = 0;
+
+function renderQuiz() {
+  if (document.getElementById('quiz-body').innerHTML) return;
+  let html = '';
+  QUIZ.forEach((q, qi) => {
+    html += '<div class="card"><div class="quiz-q"><strong>' + q.q + '</strong></div>';
+    q.opts.forEach((opt, oi) => {
+      html += '<button class="opt" onclick="qAns(' + qi + ',' + oi + ')" id="q' + qi + 'o' + oi + '">' + opt[0] + '</button>';
+    });
+    html += '<div id="q' + qi + '-exp" style="display:none;margin-top:10px;font-size:0.84rem;color:#8b949e;background:#21262d;padding:12px;border-radius:6px;"></div>';
+    html += '<div class="celebrate" id="q' + qi + '-cel">✓ Correct!</div></div>';
+  });
+  document.getElementById('quiz-body').innerHTML = html;
+}
+
+function qAns(qi, oi) {
+  if (quizDone.has(qi)) return;
+  quizDone.add(qi);
+  const q = QUIZ[qi];
+  const correct = q.opts[oi][1];
+  document.getElementById('q' + qi + 'o' + oi).className = 'opt ' + (correct ? 'correct' : 'wrong');
+  if (!correct) {
+    q.opts.forEach((_, i) => {
+      if (q.opts[i][1]) document.getElementById('q' + qi + 'o' + i).className = 'opt correct';
+    });
+  }
+  [0, 1, 2].forEach(i => {
+    const b = document.getElementById('q' + qi + 'o' + i);
+    if (b) b.disabled = true;
+  });
+  const expEl = document.getElementById('q' + qi + '-exp');
+  expEl.style.display = 'block';
+  expEl.textContent = '💡 ' + q.exp;
+  if (correct) {
+    quizScore++;
+    document.getElementById('q' + qi + '-cel').style.display = 'block';
+  }
+  if (quizDone.size === QUIZ.length) {
+    setTimeout(() => {
+      const res = document.getElementById('quiz-result');
+      res.style.display = 'block';
+      res.innerHTML =
+        '<div class="card" style="text-align:center;">' +
+        '<div style="font-size:2rem;font-weight:800;color:' + (quizScore === 3 ? '#3fb950' : '#d29922') + ';margin-bottom:8px;">' + quizScore + ' / 3</div>' +
+        '<p style="color:#8b949e;">' + (
+          quizScore === 3 ? 'Perfect — Week 2 complete. Ready for Week 3!' :
+          quizScore === 2 ? 'Almost — review the explanation above for the one you missed.' :
+          'Review the What Is It? tab and the Complexity Dial, then try again.'
+        ) + '</p>' +
+        (quizScore >= 2 ? '<br><a href="../week3/index.html" style="color:#ff7b72;font-size:0.95rem;">→ Go to Week 3</a>' : '') +
+        '</div>';
+    }, 500);
+  }
+}
+
+// ============ COPY CODE ============
+function copyCode(preId, btnId) {
+  const text = document.getElementById(preId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#3fb950';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+// ============ INLINE CODE SNIPPETS ============
+(function populateCode() {
+
+  document.getElementById('code-split').textContent =
+'import numpy as np\n' +
+'from sklearn.linear_model import LinearRegression\n' +
+'from sklearn.metrics import r2_score\n' +
+'\n' +
+'months = np.array([1,2,3,4,5,6,7,8,9,10,11,12]).reshape(-1,1)\n' +
+'bills  = np.array([1200,1380,1550,1820,2080,2350,2720,3100,3580,4150,4820,5500])\n' +
+'\n' +
+'split = 8\n' +
+'X_train, y_train = months[:split], bills[:split]\n' +
+'X_test,  y_test  = months[split:], bills[split:]\n' +
+'\n' +
+'model = LinearRegression().fit(X_train, y_train)\n' +
+'print(f"Train R2: {r2_score(y_train, model.predict(X_train)):.3f}")\n' +
+'print(f"Test  R2: {r2_score(y_test,  model.predict(X_test)):.3f}")';
+
+  document.getElementById('code-dial').textContent =
+'from sklearn.preprocessing import PolynomialFeatures\n' +
+'from sklearn.linear_model import LinearRegression\n' +
+'from sklearn.pipeline import make_pipeline\n' +
+'from sklearn.metrics import mean_squared_error\n' +
+'import numpy as np\n' +
+'\n' +
+'months = np.array([1,2,3,4,5,6,7,8,9,10,11,12]).reshape(-1,1)\n' +
+'bills  = np.array([1200,1380,1550,1820,2080,2350,2720,3100,3580,4150,4820,5500])\n' +
+'X_train, y_train = months[:8], bills[:8]\n' +
+'X_test,  y_test  = months[8:], bills[8:]\n' +
+'\n' +
+'for degree in range(1, 8):\n' +
+'    model = make_pipeline(PolynomialFeatures(degree), LinearRegression())\n' +
+'    model.fit(X_train, y_train)\n' +
+'    tr = mean_squared_error(y_train, model.predict(X_train))\n' +
+'    te = mean_squared_error(y_test,  model.predict(X_test))\n' +
+'    print(f"Degree {degree}: train={tr:.0f}  test={te:.0f}  ratio={te/tr:.1f}x")';
+
+  document.getElementById('code-cv').textContent =
+'from sklearn.preprocessing import PolynomialFeatures\n' +
+'from sklearn.linear_model import LinearRegression\n' +
+'from sklearn.pipeline import make_pipeline\n' +
+'from sklearn.model_selection import cross_val_score\n' +
+'import numpy as np\n' +
+'\n' +
+'months = np.array([1,2,3,4,5,6,7,8,9,10,11,12]).reshape(-1,1)\n' +
+'bills  = np.array([1200,1380,1550,1820,2080,2350,2720,3100,3580,4150,4820,5500])\n' +
+'\n' +
+'model = make_pipeline(PolynomialFeatures(2), LinearRegression())\n' +
+'scores = cross_val_score(model, months, bills, cv=4, scoring=\'r2\')\n' +
+'print(f"Fold scores: {scores.round(3)}")\n' +
+'print(f"Mean CV R2:  {scores.mean():.3f}")';
+
+})();
+
+// ============ INIT ============
+setTimeout(() => { updateSplit(); }, 100);
+setTimeout(() => { setDegree(1); }, 150);
+setTimeout(() => { setFold(1); }, 200);
+</script>
 </body>
 </html>
